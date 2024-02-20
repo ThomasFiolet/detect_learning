@@ -6,6 +6,8 @@ from matplotlib import font_manager
 
 import cv2 as cv2
 
+import plotly.graph_objects as go
+
 #Initialization
 # fig1 = plt.figure(1, figsize=(8, 8))
 # fig1.set_facecolor((30/255, 30/255, 30/255))
@@ -62,15 +64,72 @@ def draw_graph(fig, G, layout, labels):
     fig.canvas.draw()
     fig.canvas.flush_events()
 
-def labels_comp(sample_short_labels, spl_labels, algs):
-    sample_short_labels = {i: algs[i].split('(', 1)[0] for i in range(0, len(algs))}
-    sample_short_labels = {i: sample_short_labels[i].split(' = ')[1] for i in range(0, len(sample_short_labels))}
-    for i in range(0, len(sample_short_labels)):
-        if sample_short_labels[i] == "''.join": sample_short_labels[i] = "tesserocr.image_to_text"
-    for k in spl_labels:
-        if spl_labels[k] == "''.join": spl_labels[k] = "tesserocr.image_to_text"
-    return sample_short_labels, spl_labels, algs
+def labels_comp(pipeline_labels, sample_labels, algs):
+    pipeline_labels = {i: algs[i].split('(', 1)[0] for i in range(0, len(algs))}
+    pipeline_labels = {i: pipeline_labels[i].split(' = ')[1] for i in range(0, len(pipeline_labels))}
+    for i in range(0, len(pipeline_labels)):
+        if pipeline_labels[i] == "''.join": pipeline_labels[i] = "tesserocr.image_to_text"
+    for k in sample_labels:
+        if sample_labels[k] == "''.join": sample_labels[k] = "tesserocr.image_to_text"
+    return pipeline_labels, sample_labels
 
 def draw_current_image(im):
     imS = cv2.resize(im, (480, 360))
     cv2.imshow("Current image", imS)
+    cv2.waitKey(1)
+
+def plot_graph(G, pos, labels):
+    edge_x = []
+    edge_y = []
+    for k, p in pos.items() : G.nodes[k]['pos'] = p
+    for edge in G.edges():
+        x0, y0 = G.nodes[edge[0]]['pos']
+        x1, y1 = G.nodes[edge[1]]['pos']
+        edge_x.append(x0)
+        edge_x.append(x1)
+        edge_x.append(None)
+        edge_y.append(y0)
+        edge_y.append(y1)
+        edge_y.append(None)
+
+    edge_trace = go.Scatter(
+        x=edge_x, y=edge_y,
+        line=dict(width=0.5, color='#888'),
+        hoverinfo='none',
+        mode='lines')
+    
+    node_x = []
+    node_y = []
+    for node in G.nodes():
+        x, y = G.nodes[node]['pos']
+        node_x.append(x)
+        node_y.append(y)
+
+    for label, node in zip(labels.items(), G.nodes()): G.nodes[node]['label'] = label
+
+    l=[]
+    [l.extend([k,v]) for k,v in labels.items()]
+
+    node_trace = go.Scatter(
+        x=node_x, y=node_y,
+        mode='markers+text',
+        text=l)
+    
+    fig = go.Figure(data=[edge_trace, node_trace],
+             layout=go.Layout(
+                title='<br>Sample Graph',
+                titlefont_size=16,
+                showlegend=False,
+                hovermode='closest',
+                margin=dict(b=20,l=5,r=5,t=40),
+                annotations=[ dict(
+                    showarrow=False,
+                    xref="paper", yref="paper",
+                    x=0.005, y=-0.002 ) ],
+                xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+                yaxis=dict(showgrid=False, zeroline=False, showticklabels=False))
+                )
+    
+    fig_w = go.FigureWidget(fig)
+
+    return fig_w

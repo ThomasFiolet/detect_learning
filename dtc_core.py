@@ -10,8 +10,6 @@ import random
 
 def setup_sample_graph():
     with open("alg_list.txt") as file : alg = [line.rstrip() for line in file]
-    for a in alg : a = a.replace('\\', '* ')
-    for a in alg : a = a.replace('**', '\\')
 
     sample_labels = {a: a.split('(', 1)[0] for a in alg}
     sample_labels = {a: sample_labels[a].split(' = ', 1)[1] for a in sample_labels}

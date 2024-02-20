@@ -31,6 +31,11 @@ from matplotlib import pyplot as plt
 from matplotlib.colors import LinearSegmentedColormap
 from matplotlib import font_manager
 
+import plotly.graph_objects as go
+import plotly.express as px
+import plotly.io as pio
+#pio.renderers.default = "vscode"
+
 import networkx as nx
 import torch
 
@@ -45,7 +50,7 @@ sample, sample_labels = dtc_core.setup_sample_graph()
 
 pipeline = nx.DiGraph()
 pipeline.add_node(0)
-sample_short_labels = {0: "0"}
+pipeline_labels = {0: "0"}
 
 barre_code = ""
 
@@ -59,14 +64,21 @@ files = [ f for f in sorted(listdir(image_path)) if isfile(join(image_path,f)) ]
 files = sorted(files)
 images = np.empty(len(files), dtype=object)
 
-fig1 = plt.figure(1, figsize=(8, 8))
-fig2 = plt.figure(2, figsize=(8, 8))
+# fig = px.bar(x=["a", "b", "c"], y=[1, 3, 2])
+# fig.write_image("test.png")
+
+#fig1 = plt.figure(1, figsize=(8, 8))
+#fig2 = plt.figure(2, figsize=(8, 8))
+
+fig = dtc_draw.plot_graph(sample, nx.multipartite_layout(sample), sample_labels)
+fig.show(renderer="browser")
 
 for k in range(0, len(files)):
     images[k] = cv2.imread(join(image_path,files[k]))
     im_g = cv2.cvtColor(images[k], cv2.COLOR_BGR2GRAY)
     
     for j in range(0, epoch):
+        print('RUNNING ITERATION : ' + str(k) + ', ' + str(j))
         if j > e_number: EXPLORE = False
         else: EXPLORE = True
         pipeline, algs = dtc_core.wave_function_collapse(sample, EXPLORE)
@@ -83,7 +95,6 @@ for k in range(0, len(files)):
         eps *= (1 - lda)
         dtc_graph.normalize_graph(sample)
         
-        sample_short_labels, sample_labels, algs = dtc_draw.labels_comp(sample_short_labels, sample_labels, algs)
-        dtc_draw.draw_graph(fig1, pipeline, "planar_layout", sample_short_labels)
-        dtc_draw.draw_graph(fig2, sample, "multipartite_layout", sample_labels)
-        
+        pipeline_labels, sample_labels = dtc_draw.labels_comp(pipeline_labels, sample_labels, algs)
+        #dtc_draw.draw_graph(fig1, pipeline, "planar_layout", pipeline_labels)
+        #dtc_draw.draw_graph(fig2, sample, "multipartite_layout", sample_labels)
