@@ -2,11 +2,17 @@ import networkx as nx
 import numpy as np
 
 IN_LAYER = 1
+IN_LAYER_DIVISION = 3
 OUT_LAYER = 3
 MAX_LAYER = sum(1 for _ in open('alg_list.txt'))
 
 import dtc_graph
 import random
+
+def normalize(v):
+    norm = np.linalg.norm(v)
+    if norm != 0: return v/np.linalg.norm(v)
+    else: return v
 
 def setup_sample_graph():
     with open("alg_list.txt") as file : alg = [line.rstrip() for line in file]
@@ -41,6 +47,9 @@ def setup_sample_graph():
             pr_layer -= 1
         else:
             sample.nodes[node]['subset'] = 2
+
+    for k in sample_labels:
+        if sample_labels[k] == "''.join": sample_labels[k] = "tesserocr.image_to_text"
 
     return sample, sample_labels
 
