@@ -1,0 +1,3 @@
+barre_code = utils.wrap.zxing(im, zxingcpp.BarcodeFormat.EAN13)
+barre_code = ''.join(c for c in ''.join(tesserocr.image_to_text(Image.fromarray((im*255).astype(np.uint8))).splitlines()) if c.isdecimal())
+retval, barre_code, decoded_type = cv_barcode_detector.detectAndDecode((im*255).astype(np.uint8))
