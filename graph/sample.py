@@ -1,18 +1,21 @@
 import networkx as nx
 import numpy as np
 from fa2 import ForceAtlas2
+from processing_py import *
 
 import math
 
-from graph import Node
 from learn import QSwitch
+from learn import Learner
 
-PIPE = 0
-SOURCE = 1
-SINKS = 2
+PIPE = 1
+SOURCE = 0
+SINK = 2
 
 class Sample:
-    def __init__(self, sources_file, sinks_file, pipes_file):
+    def __init__(self, sources_file, sinks_file, pipes_file, conv_net):
+        self.current_node = "im = im_g"
+
         with open(sources_file) as file : sources_string = [line.rstrip() for line in file]
         with open(sinks_file) as file : sinks_string = [line.rstrip() for line in file]
         with open(pipes_file) as file : pipes_string = [line.rstrip() for line in file]
@@ -34,8 +37,8 @@ class Sample:
         for i in range(0, self.adjacency.shape[0]):
             for j in range(0, self.adjacency.shape[1]):
                 if (self.adjacency[i][j] != 0).all():
-                    subset_i = SOURCE*(i < self.N_sources) + SINKS*(i > self.N_sinks)
-                    subset_j = SOURCE*(j < self.N_sources) + SINKS*(j > self.N_sinks)
+                    #subset_i = SOURCE*(i < self.N_sources) + SINK*(i > self.N_sinks)
+                    #subset_j = SOURCE*(j < self.N_sources) + SINK*(j > self.N_sinks)
                     self.edges_list.append((node_string[i], node_string[j], self.adjacency[i][j]))
 
         self.graph.add_weighted_edges_from(self.edges_list)
@@ -49,8 +52,18 @@ class Sample:
             if name == "''.join": self.graph.nodes[node]['name'] = "tesserocr.image_to_text"
 
             n_outputs = sum(1 for _ in self.graph.successors(node))
-            self.graph.nodes[node]['name'] = QSwitch(n_outputs)
+            self.graph.nodes[node]['QTable'] = QSwitch(n_outputs)
 
+            for alg in sources_string:
+                if node == alg: self.graph.nodes[node]['subset'] = SOURCE
+
+            for alg in sinks_string:
+                if node == alg: self.graph.nodes[node]['subset'] = SINK
+
+            for alg in pipes_string:
+                if node == alg: self.graph.nodes[node]['subset'] = PIPE
+
+            self.graph.nodes[node]['learner'] = Learner(conv_net.parameters(), self.graph.nodes[node]['QTable'].parameters())
 
     def draw(self, app):
         app.fill(0)
@@ -95,9 +108,11 @@ class Sample:
         app.rectMode(CENTER)
         for node in self.graph.nodes :
             app.fill(0,0,0,175)
-            app.rect(self.graph.nodes[node]['pos'][0], self.graph.nodes[node]['pos'][1], len(self.graph.nodes[node].name)*15*0.6, 18)
+            app.rect(self.graph.nodes[node]['pos'][0], self.graph.nodes[node]['pos'][1], len(self.graph.nodes[node]['name'])*15*0.6, 18)
             app.fill(255)
-            app.text(self.graph.nodes[node].name, self.graph.nodes[node]['pos'][0], self.graph.nodes[node]['pos'][1] + 4)
+            app.text(self.graph.nodes[node]['name'], self.graph.nodes[node]['pos'][0], self.graph.nodes[node]['pos'][1] + 4)
+
+        print("drawn")
 
     def set_pos(self, WIN_W, WIN_H):
         forceatlas2 = ForceAtlas2(
@@ -126,7 +141,7 @@ class Sample:
 
         pos = nx.multipartite_layout(self.graph, subset_key='subset', align='vertical', center = np.array([0, 0]), scale = 1)
 
-        pos_force = forceatlas2.forceatlas2(sample_numpy, pos=np.asarray(list(pos.values()), dtype=np.float32), iterations = 0)
+        pos_force = forceatlas2.forceatlas2(sample_numpy, pos=np.asarray(list(pos.values()), dtype=np.float32), iterations = 1)
         pos_force_list = list(pos_force)
         for i, k in enumerate(pos):
             pos[k] = pos_force_list[i]

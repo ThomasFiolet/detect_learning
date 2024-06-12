@@ -1,2 +1,2 @@
-from .node import Node
 from .sample import Sample
+from .pipeline import Pipeline
