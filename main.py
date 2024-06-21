@@ -6,6 +6,7 @@ import cv2 as cv2
 import numpy as np
 from processing_py import *
 import torch
+torch.set_default_device('cuda')
 import torchvision.transforms as transforms
 import networkx as nx
 
@@ -13,6 +14,10 @@ from graph import Sample
 from graph import Pipeline
 from learn import Conv
 from utils import iter_extract
+
+PIPE = 1
+SOURCE = 0
+SINK = 2
 
 # WIN_W = 800
 # WIN_H = 800
@@ -45,7 +50,7 @@ down_width = 512
 down_height = 512
 down_points = (down_width, down_height)
 
-eps = 0.9
+eps = 0.5
 
 for im_f in images:
     for i in range(0,50):
@@ -53,17 +58,26 @@ for im_f in images:
         spl.current_node = "im = im_g"
         im_g = cv2.cvtColor(im_f, cv2.COLOR_BGR2GRAY)
         im_g = cv2.resize(im_g, down_points, interpolation= cv2.INTER_LINEAR)
-        im_t = transforms.ToTensor()(im_g)
-        c_im = torch.flatten(conv_net.forward(im_t))
+        im_t = transforms.ToTensor()(im_g).to(torch.device("cuda:0" if torch.cuda.is_available() else "cpu"))
+        c_im = conv_net.forward(im_t)
+        #print("Current node :")
         while(spl.graph.out_degree(spl.current_node) > 0):
             if random.random() > eps:
                 idx = torch.argmax(spl.graph.nodes[spl.current_node]['QTable'].forward(c_im))
                 idx = idx.item()
             else:
                 idx = random.randrange(0, sum(1 for _ in spl.graph.successors(spl.current_node)))
+                spl.graph.nodes[spl.current_node]['QTable'].FORWARDED = 0
             succ = spl.graph.successors(spl.current_node)
             spl.current_node = iter_extract(succ, idx)
             pipeline.append(spl.current_node)
-            print(spl.current_node)
+            #print(spl.current_node) 
         pipeline.browse(im_g)
-        print(pipeline.barre_code)
+        #print(pipeline.barre_code)
+        pipeline.unsupervised()
+        #print("Alg :")
+        for alg in pipeline.graph:
+            if spl.graph.nodes[alg]['subset'] != SINK and spl.graph.nodes[alg]['QTable'].FORWARDED == 1 :
+                #print(alg)
+                #print(spl.graph.nodes[alg]['QTable'].last_prediction)
+                spl.graph.nodes[alg]['learner'].train(spl.graph.nodes[alg]['QTable'].last_prediction, pipeline.reward)

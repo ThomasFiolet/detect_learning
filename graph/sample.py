@@ -52,7 +52,9 @@ class Sample:
             if name == "''.join": self.graph.nodes[node]['name'] = "tesserocr.image_to_text"
 
             n_outputs = sum(1 for _ in self.graph.successors(node))
-            self.graph.nodes[node]['QTable'] = QSwitch(n_outputs)
+            if n_outputs != 0: 
+                self.graph.nodes[node]['QTable'] = QSwitch(n_outputs)
+                self.graph.nodes[node]['learner'] = Learner(conv_net.parameters(), self.graph.nodes[node]['QTable'].parameters())
 
             for alg in sources_string:
                 if node == alg: self.graph.nodes[node]['subset'] = SOURCE
@@ -62,8 +64,6 @@ class Sample:
 
             for alg in pipes_string:
                 if node == alg: self.graph.nodes[node]['subset'] = PIPE
-
-            self.graph.nodes[node]['learner'] = Learner(conv_net.parameters(), self.graph.nodes[node]['QTable'].parameters())
 
     def draw(self, app):
         app.fill(0)

@@ -30,7 +30,8 @@ class Pipeline:
 
     def append(self, alg):
         self.graph.add_node(alg)
-        self.graph.add_edge(self.last_node, alg)
+        if self.last_node != '':
+            self.graph.add_edge(self.last_node, alg)
         self.last_node = alg
 
     def browse(self, im_g):
