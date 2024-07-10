@@ -20,6 +20,8 @@ import zxingcpp
 from utils import zxing
 from utils import tesser
 
+LAMBDA = 0.2
+
 class Pipeline:
     def __init__(self):
         self.graph = nx.DiGraph()
@@ -51,15 +53,17 @@ class Pipeline:
             self.barre_code = ''
         self.barre_code = str(self.barre_code)
         self.reward = damerau_levenshtein_distance(self.barre_code, ground_truth)
+        self.reward = 1/(1+math.exp(-LAMBDA*self.reward+2))
         #print("Pipeline supervised score : " + str(self.reward))
 
     def unsupervised(self):
         if self.barre_code is None:
             self.reward = 13
         elif len(self.barre_code) < 13:
-            self.reward = 10
+            self.reward = 13
         else:
-            self.reward = 5
+            self.reward = 1
+        self.reward = 1/(1+math.exp(-LAMBDA*self.reward+2))
         #print("Pipeline unsupervised score : " + str(self.reward))
 
     def draw(self, app, WIN_W, WIN_H):
@@ -128,4 +132,3 @@ class Pipeline:
         #     app.fill(255)
         #     app.text(self.graph.nodes[node]['name'], self.graph.nodes[node]['pos'][0], self.graph.nodes[node]['pos'][1] + 4)
 
-    

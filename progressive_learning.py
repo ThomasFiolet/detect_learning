@@ -1,6 +1,7 @@
 from os import listdir
 from os.path import join, isfile
 import random
+import math
 
 import cv2 as cv2
 import numpy as np
@@ -24,6 +25,8 @@ PIPE = 1
 SOURCE = 0
 SINK = 2
 
+LAMBDA = 0.2
+
 function_folder = "zxing"
 source_file, pipes_file, sinks_file = read_functions(function_folder)
 
@@ -39,7 +42,7 @@ eps = 0.75
 P_ground_truth = 1
 GROUND_TRUTH = True
 
-train_epoch = 5
+train_epoch = 2
 exec_epoch = 1
 
 training_set_size = 50
@@ -128,6 +131,8 @@ for k in range(len(test_set)):
     print('Barrecode : ' + str(pipeline.barre_code))
     print('Groundtruth : ' + str(test_label[k]))
     if pipeline.barre_code is None:
-        print(13)
+        score = 1/(1+math.exp(-LAMBDA*13+2))
     else:
-        print(damerau_levenshtein_distance(str(pipeline.barre_code), test_label[k]))
+        score = damerau_levenshtein_distance(str(pipeline.barre_code), test_label[k])
+        score = 1/(1+math.exp(-LAMBDA*score+2))
+    print(score)
