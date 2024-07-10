@@ -7,24 +7,22 @@ torch.set_default_device('cuda')
 
 class Learner:
     def __init__(self, c_parameters, q_parameters):
-        self.criterion = nn.MSELoss()
+        self.criterion = nn.CrossEntropyLoss()
         parameters = list(c_parameters) + list(q_parameters)
         self.optimizer = optim.SGD(parameters, lr=0.9)
+        self.choosen_idx = -1
 
     def train(self, output, reward):
         target = torch.clone(output)
         idx = torch.argmax(target)
-        # print("Target :")
-        # print(target.shape)
-        # print(target)
-        target[:][idx] = reward
-        
-        # print("Target reward:")
-        # print(target.shape)
-        # print(target)
-        # out = torch.clone(output)
-        # tar = torch.clone(target)
+        for k, t in enumerate(target):
+            target[:][k] = max(0, 13 - reward)
+            if k is self.choosen_idx:
+                target[:][k] = reward
+
         loss = self.criterion(output, target).detach() #Avoid inplace error while training
+        
         loss.requires_grad = True
         loss.backward(retain_graph=True)
+        print('Loss : ' + str(loss.item()))
         self.optimizer.step()

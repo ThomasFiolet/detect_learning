@@ -4,6 +4,7 @@ from processing_py import *
 import networkx as nx
 import numpy as np
 from pyxdameraulevenshtein import normalized_damerau_levenshtein_distance
+from pyxdameraulevenshtein import damerau_levenshtein_distance
 import cv2 as cv2
 cv_barcode_detector = cv2.barcode.BarcodeDetector()
 saliency = cv2.saliency.StaticSaliencyFineGrained_create()
@@ -17,6 +18,7 @@ import tesserocr
 import zxingcpp
 
 from utils import zxing
+from utils import tesser
 
 class Pipeline:
     def __init__(self):
@@ -24,6 +26,8 @@ class Pipeline:
         self.last_node = ""
         self.reward = 0
         self.barre_code = ""
+        self.horizon = 8
+        self.complexity = 2
 
     def zero_graph(self):
         self.graph.clear()
@@ -40,19 +44,23 @@ class Pipeline:
         for alg in self.graph:
             exec(alg)
         #self.barre_code = barre_code
+        return im
 
     def supervised(self, ground_truth):
-        self.reward = normalized_damerau_levenshtein_distance(self.barre_code, ground_truth)
-        print("Pipeline supervised score : " + str(self.score))
+        if self.barre_code is None:
+            self.barre_code = ''
+        self.barre_code = str(self.barre_code)
+        self.reward = damerau_levenshtein_distance(self.barre_code, ground_truth)
+        #print("Pipeline supervised score : " + str(self.reward))
 
     def unsupervised(self):
         if self.barre_code is None:
-            self.reward = 0
+            self.reward = 13
         elif len(self.barre_code) < 13:
-            self.reward = 0.25
+            self.reward = 10
         else:
-            self.reward = 0.75
-        print("Pipeline unsupervised score : " + str(self.reward))
+            self.reward = 5
+        #print("Pipeline unsupervised score : " + str(self.reward))
 
     def draw(self, app, WIN_W, WIN_H):
         pos = nx.spring_layout(self.graph)

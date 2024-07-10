@@ -24,10 +24,11 @@ class Sample:
         self.N_sources = len(sources_string)
         self.N_sinks = len(sinks_string)
         self.N_pipes = len(pipes_string)
+
         self.N_nodes = self.N_sources + self.N_sinks + self.N_pipes
 
         self.adjacency = np.ones((self.N_nodes, self.N_nodes))
-        for i in range(0, self.N_sources): self.adjacency[i][0] = 0
+        for i in range(1, self.N_sources): self.adjacency[i][0] = 0
         for i in range(self.N_nodes - self.N_sinks, self.N_nodes):
             for j in range(0, self.N_nodes) : self.adjacency[i][j] = 0
 
