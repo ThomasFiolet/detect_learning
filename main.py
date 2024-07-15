@@ -1,6 +1,7 @@
 from os import listdir
 from os.path import join, isfile
 import random
+import math
 
 import cv2 as cv2
 import numpy as np
@@ -17,44 +18,38 @@ from graph import Pipeline
 from learn import Conv
 from utils import iter_extract
 from utils import read_files
+from utils import read_functions
 from utils import sort_training_test
+from metrics import reward
 
 PIPE = 1
 SOURCE = 0
 SINK = 2
 
-# WIN_W = 800
-# WIN_H = 800
-# app = App(WIN_W, WIN_H)
-# app.background(255)
+LAMBDA = 0.2
 
-source_file = "sources"
-pipes_files = "pipes_reduced"
-sinks_file = "sinks"
+function_folder = "zxing"
+source_file, pipes_file, sinks_file = read_functions(function_folder)
 
 conv_net = Conv()
 
-spl = Sample(source_file, sinks_file, pipes_files, conv_net)
-# spl.set_pos(WIN_W, WIN_H)
-# spl.draw(app)
+spl = Sample(source_file, sinks_file, pipes_file, conv_net)
 
 down_width = 128
 down_height = 128
 down_points = (down_width, down_height)
 
-eps = 0.95
+eps = 0.75
 P_ground_truth = 1
 GROUND_TRUTH = True
 
-train_epoch = 10
+train_epoch = 5
 exec_epoch = 1
 
 training_set_size = 50
 
 suffix = 'real'
 images, ground_truth, len_files = read_files(suffix)
-
-#------------------------------------------------------
 
 training_set, test_set, training_label, test_label = sort_training_test(training_set_size, images, ground_truth)
 
@@ -63,9 +58,9 @@ for i in range(0,train_epoch):
         if random.random() < P_ground_truth: GROUND_TRUTH = True
         else: GROUND_TRUTH = False
         im_g = cv2.cvtColor(training_set[k], cv2.COLOR_BGR2GRAY)
-        print('---------------------------------')
-        print("TRAINING PHASE")
-        print('---------------------------------')
+        # print('---------------------------------')
+        # print("TRAINING PHASE")
+        # print('---------------------------------')
         pipeline = Pipeline()
         spl.current_node = "im = im_g"
 
@@ -78,13 +73,7 @@ for i in range(0,train_epoch):
 
             c_eps = (pipeline.graph.number_of_nodes()/pipeline.horizon)**2
             if random.random() < c_eps:
-                nxt_node_number = random.randrange(1,4)
-                if nxt_node_number == 1:
                     spl.current_node = 'self.barre_code = zxing(im, zxingcpp.BarcodeFormat.EAN13)'
-                if nxt_node_number == 2:
-                    spl.current_node = 'self.barre_code = tesser(im)'
-                if nxt_node_number == 3:
-                    spl.current_node = 'retval, self.barre_code, decoded_type = cv_barcode_detector.detectAndDecode((im*255).astype(np.uint8))'
             elif random.random() > eps:
                 idx = torch.argmin(spl.graph.nodes[spl.current_node]['QTable'].forward(c_im))
                 idx = idx.item()
@@ -96,15 +85,14 @@ for i in range(0,train_epoch):
                 succ = spl.graph.successors(spl.current_node)
                 spl.current_node = iter_extract(succ, idx)
             if spl.graph.nodes[spl.current_node]['subset'] != SINK :
-                #print(idx)
                 spl.graph.nodes[spl.current_node]['learner'].choosen_idx = idx
             pipeline.append(spl.current_node)
-            print(spl.current_node)
-        #pipeline.browse(im_g)
+            # print(spl.current_node)     
 
-        print('Computing score')
-        if GROUND_TRUTH == True: pipeline.supervised(training_label[k])
-        else: pipeline.unsupervised()
+        pipeline.browse(im_g)
+        # print('Computing score')
+        if GROUND_TRUTH == True: pipeline.score(training_label[k])
+        else: pipeline.score(None)
 
         bc = pipeline.barre_code
 
@@ -113,22 +101,8 @@ for i in range(0,train_epoch):
                 #if spl.graph.nodes[alg]['QTable'].FORWARDED == 1 :
                 print('Training node : ' + alg)
                 spl.graph.nodes[alg]['learner'].train(spl.graph.nodes[alg]['QTable'].last_prediction, pipeline.reward)
-        #print(eps)
-        #eps = max(0.1, eps - 0.01)
-
-        # for alg in pipeline.graph:
-        #     print(alg) 
-        # if bc is None:
-        #     print('Barrecode : ' + str(pipeline.barre_code))
-        #     print('Groundtruth : ' + str(ground_truth[k]))
-        #     print(1.0)
-        # else:
-        #     print('Barrecode : ' + str(pipeline.barre_code))
-        #     print('Groundtruth : ' + str(ground_truth[k]))
-        #     if pipeline.barre_code is None:
-        #         print(1)
-        #     else:
-        #         print(normalized_damerau_levenshtein_distance(pipeline.barre_code, ground_truth[k]))
+        
+        print('-----------------------------------')
 
 for k in range(len(test_set)):
     print('---------------------------------')
@@ -147,13 +121,7 @@ for k in range(len(test_set)):
         #print(str(pipeline.graph.number_of_nodes()) + '/' + str(pipeline.horizon) + '**2')
         c_eps = (pipeline.graph.number_of_nodes()/pipeline.horizon)**2
         if random.random() < c_eps:
-            nxt_node_number = random.randrange(1,4)
-            if nxt_node_number == 1:
                 spl.current_node = 'self.barre_code = zxing(im, zxingcpp.BarcodeFormat.EAN13)'
-            if nxt_node_number == 2:
-                spl.current_node = 'self.barre_code = tesser(im)'
-            if nxt_node_number == 3:
-                spl.current_node = 'retval, self.barre_code, decoded_type = cv_barcode_detector.detectAndDecode((im*255).astype(np.uint8))'
         else:
             idx = torch.argmin(spl.graph.nodes[spl.current_node]['QTable'].forward(c_im))
             idx = idx.item()
@@ -166,7 +134,10 @@ for k in range(len(test_set)):
         print(alg) 
     print('Barrecode : ' + str(pipeline.barre_code))
     print('Groundtruth : ' + str(test_label[k]))
-    if pipeline.barre_code is None:
-        print(13)
-    else:
-        print(damerau_levenshtein_distance(str(pipeline.barre_code), test_label[k]))
+    score  = reward(pipeline.barre_code, test_label[k])
+    # if pipeline.barre_code is None:
+    #     score = 1/(1+math.exp(-LAMBDA*13+2))
+    # else:
+    #     score = damerau_levenshtein_distance(str(pipeline.barre_code), test_label[k])
+    #     score = 1/(1+math.exp(-LAMBDA*score+2))
+    print(score)

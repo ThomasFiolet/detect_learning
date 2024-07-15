@@ -13,7 +13,7 @@ SOURCE = 0
 SINK = 2
 
 class Sample:
-    def __init__(self, sources_file, sinks_file, pipes_file, conv_net):
+    def __init__(self, sources_file, sinks_file, pipes_file, adjacency_file, conv_net):
         self.current_node = "im = im_g"
 
         with open(sources_file) as file : sources_string = [line.rstrip() for line in file]
@@ -27,10 +27,12 @@ class Sample:
 
         self.N_nodes = self.N_sources + self.N_sinks + self.N_pipes
 
-        self.adjacency = np.ones((self.N_nodes, self.N_nodes))
-        for i in range(1, self.N_sources): self.adjacency[i][0] = 0
-        for i in range(self.N_nodes - self.N_sinks, self.N_nodes):
-            for j in range(0, self.N_nodes) : self.adjacency[i][j] = 0
+        # self.adjacency = np.ones((self.N_nodes, self.N_nodes))
+        # for i in range(1, self.N_sources): self.adjacency[i][0] = 0
+        # for i in range(self.N_nodes - self.N_sinks, self.N_nodes):
+        #     for j in range(0, self.N_nodes) : self.adjacency[i][j] = 0
+
+        self.adjacency = np.loadtxt(adjacency_file)
 
         self.graph = nx.DiGraph()
 
@@ -65,6 +67,13 @@ class Sample:
 
             for alg in pipes_string:
                 if node == alg: self.graph.nodes[node]['subset'] = PIPE
+
+    def find_output_idx(self, output):
+        succ = self.graph.successors(self.current_node)
+        idx = 0
+        for i, v in enumerate(succ):
+            if v is output: idx = i
+        return idx
 
     def draw(self, app):
         app.fill(0)

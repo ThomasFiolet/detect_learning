@@ -14,14 +14,14 @@ class QSwitch(nn.Module):
         #self.criterion = nn.MSELoss()
         torch.cuda.manual_seed_all(time.time())
 
-        self.fc1 = nn.Linear(1 * 25 * 25, 50)
-        nn.init.normal_(self.fc1.weight)
+        self.fc1 = nn.Linear(1 * 25 * 25, 30)
+        nn.init.constant_(self.fc1.weight, 0)
 
-        self.fc2 = nn.Linear(50, 50)
-        nn.init.normal_(self.fc2.weight)
+        self.fc2 = nn.Linear(30, 30)
+        nn.init.constant_(self.fc2.weight, 0)
 
-        self.fc3 = nn.Linear(50, 50)
-        nn.init.normal_(self.fc3.weight)
+        self.fc3 = nn.Linear(30, 30)
+        nn.init.constant_(self.fc3.weight, 0)
 
         #self.fc4 = nn.Linear(50, 50)
         #nn.init.constant_(self.fc4.weight, 0)
@@ -29,8 +29,8 @@ class QSwitch(nn.Module):
         #self.fc5 = nn.Linear(50, 50)
         #nn.init.constant_(self.fc5.weight, 0)
 
-        self.fc4 = nn.Linear(50, n_outputs)
-        nn.init.normal_(self.fc4.weight)
+        self.fc4 = nn.Linear(30, n_outputs)
+        nn.init.constant_(self.fc4.weight, 0)
 
         self.last_prediction = torch.full((1, n_outputs), 1/n_outputs)
 

@@ -14,13 +14,13 @@ class Conv(nn.Module):
         torch.cuda.manual_seed_all(time.time())
 
         self.conv1 = nn.Conv2d(1, 1, 5)
-        nn.init.normal_(self.conv1.weight)
+        nn.init.constant_(self.conv1.weight, 0)
         
         self.conv2 = nn.Conv2d(1, 1, 5)
-        nn.init.normal_(self.conv2.weight)
+        nn.init.constant_(self.conv2.weight, 0)
         
         self.conv3 = nn.Conv2d(1, 1, 5)
-        nn.init.normal_(self.conv3.weight)
+        nn.init.constant_(self.conv3.weight, 0)
         
         #self.conv4 = nn.Conv2d(1, 1, 5)
         #nn.init.constant_(self.conv4.weight, 0)

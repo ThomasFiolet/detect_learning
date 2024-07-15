@@ -16,7 +16,7 @@ def reward(barre_code, ground_truth):
     if dl == 0:
         return 0
 
-    log_score = math.log(dl + 1, len(barre_code) + 1)
+    log_score = math.log(dl + 1, max(len(barre_code), len(ground_truth)) + 1)
 
     #return math.tanh(2*log_score)/2 + 0.5
     return log_score

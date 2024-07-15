@@ -9,7 +9,7 @@ class Learner:
     def __init__(self, c_parameters, q_parameters):
         self.criterion = nn.CrossEntropyLoss()
         parameters = list(c_parameters) + list(q_parameters)
-        self.optimizer = optim.SGD(parameters, lr=0.1)
+        self.optimizer = optim.SGD(parameters, lr=0.9, momentum=0.0)
         self.choosen_idx = -1
 
     def train(self, output, reward):
@@ -24,10 +24,13 @@ class Learner:
             idx = torch.argmin(target)
             target[:][idx] = reward
         
+        # print(output)
+        # print(target)
+        # print('--------------------------')
         #self.optimizer.zero_grad()
         loss = self.criterion(output, target).detach() #Avoid inplace error while training
         
         loss.requires_grad = True
         loss.backward(retain_graph=True)
-        print('Loss : ' + str(loss.item()))
+        #print('Loss : ' + str(loss.item()))
         self.optimizer.step()

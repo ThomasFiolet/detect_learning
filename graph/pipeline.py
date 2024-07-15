@@ -19,6 +19,7 @@ import zxingcpp
 
 from utils import zxing
 from utils import tesser
+from metrics import reward
 
 LAMBDA = 0.2
 
@@ -31,8 +32,11 @@ class Pipeline:
         self.horizon = 8
         self.complexity = 2
 
-    def zero_graph(self):
+    def zero_data(self):
         self.graph.clear()
+        self.last_node = ""
+        self.reward = 0
+        self.barre_code = ""
 
     def append(self, alg):
         self.graph.add_node(alg)
@@ -48,23 +52,12 @@ class Pipeline:
         #self.barre_code = barre_code
         return im
 
-    def supervised(self, ground_truth):
-        if self.barre_code is None:
-            self.barre_code = ''
-        self.barre_code = str(self.barre_code)
-        self.reward = damerau_levenshtein_distance(self.barre_code, ground_truth)
-        self.reward = 1/(1+math.exp(-LAMBDA*self.reward+2))
-        #print("Pipeline supervised score : " + str(self.reward))
-
-    def unsupervised(self):
-        if self.barre_code is None:
-            self.reward = 13
-        elif len(self.barre_code) < 13:
-            self.reward = 13
-        else:
-            self.reward = 1
-        self.reward = 1/(1+math.exp(-LAMBDA*self.reward+2))
-        #print("Pipeline unsupervised score : " + str(self.reward))
+    def score(self, ground_truth):
+        self.reward = reward(self.barre_code, ground_truth)
+        #print('Ground_Truth : ' + str(ground_truth))
+        #print('Barre_Code : ' + str(self.barre_code))
+        #print('Reward : ' + str(self.reward))
+        #print('\n')
 
     def draw(self, app, WIN_W, WIN_H):
         pos = nx.spring_layout(self.graph)

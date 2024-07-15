@@ -1,7 +1,6 @@
 from metrics import damerau_levenshtein
 from metrics import reward
+import numpy as np
 
-str1 = 'BAAAAAAAAAA'
-str2 = 'AAAAAAAAAAA'
-
-print(reward(str1, str2))
+adj = np.loadtxt('functions/tree/adjacency')
+print(adj)

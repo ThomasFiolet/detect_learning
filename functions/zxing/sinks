@@ -1,1 +1,0 @@
-self.barre_code = zxing(im, zxingcpp.BarcodeFormat.EAN13)
