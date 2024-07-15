@@ -41,16 +41,16 @@ down_height = 128
 down_points = (down_width, down_height)
 
 rand_eps = 0.1
-P_ground_truth = 1
-GROUND_TRUTH = True
+P_ground_truth = 0.1
+GROUND_TRUTH = False
 
-max_try = 5
+max_try = 20
 
 score_eps = 0.1
 
 training_set_size = 50
 
-suffix = 'colors'
+suffix = 'real'
 images, ground_truth, len_files = read_files(suffix)
 
 set, label = sort_no_training(images, ground_truth)
@@ -66,6 +66,13 @@ for k in range(len(set)):
     complexity = 2
     print('---------------------')
     i = 0
+    if random.random() < P_ground_truth:
+        GROUND_TRUTH = True
+        print('SUPERVISED')
+    else:
+        GROUND_TRUTH = False
+        print('UNSUPERVISED')  
+
     while score > score_eps and i < max_try:
         pipeline.zero_data()
         pipeline.complexity = min(complexity, pipeline.horizon)

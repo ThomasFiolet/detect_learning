@@ -7,7 +7,7 @@ torch.set_default_device('cuda')
 
 class Learner:
     def __init__(self, c_parameters, q_parameters):
-        self.criterion = nn.CrossEntropyLoss()
+        self.criterion = nn.MSELoss()
         parameters = list(c_parameters) + list(q_parameters)
         self.optimizer = optim.SGD(parameters, lr=0.9, momentum=0.0)
         self.choosen_idx = -1

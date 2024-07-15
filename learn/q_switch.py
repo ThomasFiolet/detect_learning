@@ -23,14 +23,17 @@ class QSwitch(nn.Module):
         self.fc3 = nn.Linear(30, 30)
         nn.init.constant_(self.fc3.weight, 0)
 
-        #self.fc4 = nn.Linear(50, 50)
+        self.fc4 = nn.Linear(30, 30)
+        nn.init.constant_(self.fc4.weight, 0)
+
+        self.fc5 = nn.Linear(30, n_outputs)
+        nn.init.constant_(self.fc5.weight, 0)
+
+        #self.fc4 = nn.Linear(30, n_outputs)
         #nn.init.constant_(self.fc4.weight, 0)
 
-        #self.fc5 = nn.Linear(50, 50)
-        #nn.init.constant_(self.fc5.weight, 0)
-
-        self.fc4 = nn.Linear(30, n_outputs)
-        nn.init.constant_(self.fc4.weight, 0)
+        #self.layer = nn.Linear(1 * 25 * 25, n_outputs)
+        #nn.init.constant_(self.layer.weight, 0)
 
         self.last_prediction = torch.full((1, n_outputs), 1/n_outputs)
 
@@ -43,11 +46,11 @@ class QSwitch(nn.Module):
         f1 = m(self.fc1(input))
         f2 = m(self.fc2(f1))
         f3 = m(self.fc3(f2))
-        #f4 = m(self.fc4(f3))
-        #f5 = m(self.fc5(f4))
         f4 = m(self.fc4(f3))
+        f5 = m(self.fc5(f4))
+        #f4 = m(self.fc4(f3))
 
-        output = f4
+        output = f5
         self.last_prediction = output[0]
         #print("Last Prediction : ")
         #print(self.last_prediction)
