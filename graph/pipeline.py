@@ -19,6 +19,7 @@ import zxingcpp
 
 from utils import zxing
 from utils import tesser
+from utils import zbar
 from metrics import reward
 
 LAMBDA = 0.2
