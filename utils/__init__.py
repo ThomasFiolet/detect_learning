@@ -2,6 +2,7 @@ from .algebra import normalize
 from .wrap import zxing
 from .wrap import tesser
 from .wrap import zbar
+from .wrap import conditionnal
 from .iterutil import iter_extract
 from .organizer import read_files
 from .organizer import read_functions

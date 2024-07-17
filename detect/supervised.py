@@ -17,7 +17,7 @@ from utils import read_functions
 from utils import iter_extract
 from metrics import reward
 
-def detect_unsupervised(im_g, function_folder):
+def detect_supervised(im_g, ground_truth, function_folder):
 
     PIPE = 1
     SOURCE = 0
@@ -33,7 +33,7 @@ def detect_unsupervised(im_g, function_folder):
     down_points = (down_width, down_height)
     complexity = 2
     rand_eps = 0.0
-    score_eps = 0.3
+    score_eps = 0.1
     max_try = 15
     i = 0
     score = 1
@@ -66,19 +66,22 @@ def detect_unsupervised(im_g, function_folder):
 
         pipeline.browse(im_g)
 
-        pipeline.score(None)
+        pipeline.score(ground_truth)
         if pipeline.reward < score:
             score = pipeline.reward
             barre_code = pipeline.barre_code
 
         #score = reward(pipeline.barre_code, None)
 
+        print('---pipeline---')
         for alg in pipeline.graph:
+            print(alg)
             if spl.graph.nodes[alg]['subset'] != SINK :
                 spl.graph.nodes[alg]['learner'].train(spl.graph.nodes[alg]['QTable'].last_prediction, pipeline.reward)
+        print('---------')
 
         i += 1
-        complexity += 1
+        if random.random() > 0.5: complexity += 1
         rand_eps += 0.02
         #print(complexity)
         #print(rand_eps)

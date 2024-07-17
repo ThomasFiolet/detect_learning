@@ -34,11 +34,7 @@ from detect import detect_supervised
 
 #---CONSTANT DEFINITION---#
 ZXING = 0
-TESSER = 1
-CVBD = 2
-ZBAR = 3
-DETECT = 4
-COND = 5
+DETECT = 1
 
 WIN_W = 800
 WIN_H = 480
@@ -62,12 +58,12 @@ batch_size = 40
 #     detect_supervised(set[k], label[k], 'tree')
 
 #---GET DATA---#
-suffix = 'real'
+suffix = 'colors'
 images, ground_truth, len_files = read_files(suffix)
 set, label = sort_no_training(images, ground_truth)
 
 #---DEFINE RESULT
-results = np.ndarray(shape=(6, len(set)), dtype=float)
+results = np.ndarray(shape=(2, len(set)), dtype=float)
 
 #---BENCHMARK LOOP---#
 for k in range(len(set)):
@@ -80,43 +76,19 @@ for k in range(len(set)):
     results[ZXING, k] = reward(barre_code, label[k])
     print(barre_code)
 
-    #TESSERACT
-    barre_code = tesser(im_g)
-    results[TESSER, k] = reward(barre_code, label[k])
-    print(barre_code)
-
-    #OPENCV
-    retval, barre_code, decoded_type = cv_barcode_detector.detectAndDecode((im_g*255).astype(np.uint8))
-    results[CVBD, k] = reward(barre_code, label[k])
-    print(barre_code)
-
-    #ZBAR
-    barre_code = zbar(im_g)
-    results[ZBAR, k] = reward(barre_code, label[k])
-    print(barre_code)
-
     #DETECT
-    barre_code = detect_unsupervised(im_g, 'tree')
+    barre_code = detect_unsupervised(im_g, 'tree_zxing')
     results[DETECT, k] = reward(barre_code, label[k])
-    print(barre_code)
-
-    #COND
-    barre_code = conditionnal(im_g)
-    results[COND, k] = reward(barre_code, label[k])
     print(barre_code)
 
 bin_step = 0.1
 counts_zxing, bins = np.histogram(results[ZXING,:], bins=10, range=(0.0, 1.0))
-counts_pytess, bins = np.histogram(results[TESSER,:], bins=10, range=(0.0, 1.0))
-counts_cvbd, bins = np.histogram(results[CVBD,:], bins=10, range=(0.0, 1.0))
-counts_zbar, bins = np.histogram(results[ZBAR,:], bins=10, range=(0.0, 1.0))
 counts_detect, bins = np.histogram(results[DETECT,:], bins=10, range=(0.0, 1.0))
-counts_cond, bins = np.histogram(results[COND,:], bins=10, range=(0.0, 1.0))
 
-heatmap = [counts_zxing.tolist(), counts_pytess.tolist(), counts_cvbd.tolist(), counts_zbar.tolist(), counts_detect.tolist(), counts_cond.tolist()]
+heatmap = [counts_zxing.tolist(), counts_detect.tolist()]
 
-f_save = open("heatmap_8.csv", "w")
-for i in (ZXING, TESSER, CVBD, ZBAR, DETECT, COND):
+f_save = open("heatmap__zxing_2.csv", "w")
+for i in (ZXING, DETECT):
     for j in range(len(heatmap[i])):
         f_save.write(str(heatmap[i][j]))
         f_save.write(";")

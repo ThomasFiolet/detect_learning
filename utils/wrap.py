@@ -9,6 +9,8 @@ import tesserocr
 from pyzbar.pyzbar import decode
 import cv2 as cv2
 
+from metrics import reward
+
 def zxing(image, bc_format):
     try: barre_code = zxingcpp.read_barcodes(image, bc_format)[0].text
     except: barre_code = '0'
@@ -25,3 +27,9 @@ def zbar(image):
         return None
     else:
         return decoded_list[0].data.decode()
+
+def conditionnal(image):
+    barre_code = zxing(image, zxingcpp.BarcodeFormat.EAN13)
+    if reward(barre_code, None) < 0.3: return barre_code
+    else:
+        return zbar(image)
