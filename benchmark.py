@@ -72,6 +72,7 @@ results = np.ndarray(shape=(6, len(set)), dtype=float)
 #---BENCHMARK LOOP---#
 for k in range(len(set)):
     im_g = cv2.cvtColor(set[k], cv2.COLOR_BGR2GRAY)
+    im_g = cv2.rotate(im_g, cv2.ROTATE_180)
     print('--------------------------------------------')
     print('Testing image ' + str(k))
 
@@ -86,7 +87,7 @@ for k in range(len(set)):
     print(barre_code)
 
     #OPENCV
-    retval, barre_code, decoded_type = cv_barcode_detector.detectAndDecode((im_g*255).astype(np.uint8))
+    barre_code, decoded_info, decoded_type = cv_barcode_detector.detectAndDecode((im_g*255).astype(np.uint8))
     results[CVBD, k] = reward(barre_code, label[k])
     print(barre_code)
 
@@ -96,7 +97,7 @@ for k in range(len(set)):
     print(barre_code)
 
     #DETECT
-    barre_code = detect_unsupervised(im_g, 'tree')
+    barre_code = detect_unsupervised(im_g, 'tree_reduced')
     results[DETECT, k] = reward(barre_code, label[k])
     print(barre_code)
 
@@ -115,7 +116,7 @@ counts_cond, bins = np.histogram(results[COND,:], bins=10, range=(0.0, 1.0))
 
 heatmap = [counts_zxing.tolist(), counts_pytess.tolist(), counts_cvbd.tolist(), counts_zbar.tolist(), counts_detect.tolist(), counts_cond.tolist()]
 
-f_save = open("heatmap_8.csv", "w")
+f_save = open("heatmap_tree_reduced.csv", "w")
 for i in (ZXING, TESSER, CVBD, ZBAR, DETECT, COND):
     for j in range(len(heatmap[i])):
         f_save.write(str(heatmap[i][j]))

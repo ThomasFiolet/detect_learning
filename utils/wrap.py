@@ -8,6 +8,7 @@ tessdata_dir_config = r'--tessdata-dir "./eng.traineddata"'
 import tesserocr
 from pyzbar.pyzbar import decode
 import cv2 as cv2
+cv_barcode_detector = cv2.barcode.BarcodeDetector()
 
 from metrics import reward
 
@@ -31,5 +32,12 @@ def zbar(image):
 def conditionnal(image):
     barre_code = zxing(image, zxingcpp.BarcodeFormat.EAN13)
     if reward(barre_code, None) < 0.3: return barre_code
-    else:
-        return zbar(image)
+
+    barre_code = tesser(image)
+    if reward(barre_code, None) < 0.3: return barre_code
+
+    barre_code, decoded_info, decoded_type = cv_barcode_detector.detectAndDecode(image)
+    if reward(barre_code, None) < 0.3: return barre_code
+
+    barre_code = zbar(image)
+    return barre_code

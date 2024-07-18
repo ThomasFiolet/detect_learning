@@ -76,10 +76,10 @@ def detect_unsupervised(im_g, function_folder):
 
         #print('---pipeline---')
         for alg in pipeline.graph:
-            #print(alg)
+            print(alg)
             if spl.graph.nodes[alg]['subset'] != SINK :
                 spl.graph.nodes[alg]['learner'].train(spl.graph.nodes[alg]['QTable'].last_prediction, pipeline.reward)
-        #print('---------')
+        print('---------')
 
         i += 1
         if random.random() > 0.5: complexity += 1
