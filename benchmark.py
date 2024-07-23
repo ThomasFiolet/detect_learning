@@ -62,7 +62,7 @@ batch_size = 40
 #     detect_supervised(set[k], label[k], 'tree')
 
 #---GET DATA---#
-suffix = 'real'
+suffix = 'BarcodeTestDataset'
 images, ground_truth, len_files = read_files(suffix)
 set, label = sort_no_training(images, ground_truth)
 
@@ -74,7 +74,7 @@ for k in range(len(set)):
     im_g = cv2.cvtColor(set[k], cv2.COLOR_BGR2GRAY)
     im_g = cv2.rotate(im_g, cv2.ROTATE_180)
     print('--------------------------------------------')
-    print('Testing image ' + str(k))
+    print('Testing image ' + str(k) + ' : ' + str(label[k]))
 
     #ZXING
     barre_code = zxing(im_g, zxingcpp.BarcodeFormat.EAN13)
@@ -116,7 +116,7 @@ counts_cond, bins = np.histogram(results[COND,:], bins=10, range=(0.0, 1.0))
 
 heatmap = [counts_zxing.tolist(), counts_pytess.tolist(), counts_cvbd.tolist(), counts_zbar.tolist(), counts_detect.tolist(), counts_cond.tolist()]
 
-f_save = open("heatmap_tree_reduced.csv", "w")
+f_save = open("heatmap_BarcodeTest.csv", "w")
 for i in (ZXING, TESSER, CVBD, ZBAR, DETECT, COND):
     for j in range(len(heatmap[i])):
         f_save.write(str(heatmap[i][j]))

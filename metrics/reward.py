@@ -11,9 +11,9 @@ def reward(barre_code, ground_truth):
     if ground_truth is None:
         if len(barre_code) == 13:
             if check_EAN_13(barre_code):
-                dl = 1
+                dl = 0
             else:
-                dl = 4
+                dl = 3
         else:
             dl = 0.8*len(barre_code)
         log_score = math.log(dl + 1, len(barre_code) + 1)

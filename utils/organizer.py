@@ -3,20 +3,31 @@ from os.path import join, isfile
 import cv2 as cv2
 import numpy as np
 import random
+import csv
 
 def read_files(suffix):
 
     image_path = 'data/' + suffix
     ground_truth_path = 'data/lists/barre-code-list-' + suffix + '.txt'
 
-    files = [ f for f in sorted(listdir(image_path)) if isfile(join(image_path,f)) ]
+    files = [f for f in sorted(listdir(image_path)) if isfile(join(image_path,f)) ]
     files = sorted(files)
     images = np.empty(len(files), dtype=object)
     for k in range(0, len(files)):
         images[k] = cv2.imread(join(image_path,files[k]))
 
-    ground_truth_file = open(ground_truth_path, 'r')
-    ground_truth = ground_truth_file.read().splitlines()
+    if suffix == 'BarcodeTestDataset' :
+        ground_truth = []
+        for k in range(0, len(files)):
+            with open('data/lists/result.csv') as csv_file:
+                csv_reader = csv.reader(csv_file, delimiter=',')
+                for row in csv_reader:
+                    if row[0] == files[k]:
+                        ground_truth.append(row[1])
+
+    else:
+        ground_truth_file = open(ground_truth_path, 'r')
+        ground_truth = ground_truth_file.read().splitlines()
 
     len_files = len(files)
 
