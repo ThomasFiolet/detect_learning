@@ -1,3 +1,5 @@
+import os
+
 import pyzbar
 from pyzbar.pyzbar import decode
 from PIL import Image, ImageOps
@@ -71,9 +73,14 @@ from utils import conditionnal
 #     cv2.imshow('False Image', cv2.resize(im, (512, 512), interpolation= cv2.INTER_LINEAR))
 #     cv2.waitKey(0)
 
-import csv
-with open('data/lists/result.csv', "rU") as f_input:
-    csv_input = csv.reader(f_input)
-    header = next(csv_input)
-    data = sorted(csv_input, key=lambda x: x[0])
-    print(data)
+# import csv
+# with open('data/lists/result.csv', "rU") as f_input:
+#     csv_input = csv.reader(f_input)
+#     header = next(csv_input)
+#     data = sorted(csv_input, key=lambda x: x[0])
+#     print(data)
+
+suffix = 'BarcodeTestDataset'
+images, ground_truth, len_files = read_files(suffix)
+#set, label = sort_no_training(images, ground_truth)
+
