@@ -5,6 +5,7 @@ from .wrap import zbar
 from .wrap import conditionnal
 from .iterutil import iter_extract
 from .organizer import read_files
+from .organizer import read_join_dataset
 from .organizer import read_functions
 from .organizer import sort_training_test
 from .organizer import sort_no_training

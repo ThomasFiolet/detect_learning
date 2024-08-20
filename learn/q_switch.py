@@ -14,18 +14,6 @@ class QSwitch(nn.Module):
         #self.criterion = nn.MSELoss()
         torch.cuda.manual_seed_all(time.time())
 
-        self.fc1 = nn.Linear(1 * 25 * 25, 30)
-        nn.init.constant_(self.fc1.weight, 0)
-
-        self.fc2 = nn.Linear(30, 30)
-        nn.init.constant_(self.fc2.weight, 0)
-
-        self.fc3 = nn.Linear(30, 30)
-        nn.init.constant_(self.fc3.weight, 0)
-
-        self.fc4 = nn.Linear(30, 30)
-        nn.init.constant_(self.fc4.weight, 0)
-
         self.fc5 = nn.Linear(30, n_outputs)
         nn.init.constant_(self.fc5.weight, 0)
 
@@ -42,12 +30,8 @@ class QSwitch(nn.Module):
     def forward(self, input):
 
         m = nn.Sigmoid()
-
-        f1 = m(self.fc1(input))
-        f2 = m(self.fc2(f1))
-        f3 = m(self.fc3(f2))
-        f4 = m(self.fc4(f3))
-        f5 = m(self.fc5(f4))
+        
+        f5 = m(self.fc5(input))
         #f4 = m(self.fc4(f3))
 
         output = f5

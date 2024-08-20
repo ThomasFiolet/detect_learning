@@ -21,6 +21,7 @@ from graph import Pipeline
 from learn import Conv
 from utils import iter_extract
 from utils import read_files
+from utils import read_join_dataset
 from utils import read_functions
 from utils import sort_training_test
 from utils import sort_no_training
@@ -29,6 +30,7 @@ from utils import tesser
 from utils import zbar
 from utils import conditionnal
 from metrics import reward
+from detect import detect_init
 from detect import detect_unsupervised
 from detect import detect_supervised
 
@@ -62,12 +64,20 @@ batch_size = 40
 #     detect_supervised(set[k], label[k], 'tree')
 
 #---GET DATA---#
-suffix = 'BarcodeTestDataset'
-images, ground_truth, len_files = read_files(suffix)
+suffix = 'real'
+images, ground_truth, len_files = read_join_dataset(['real', 'BarcodeTestDataset'])
+#print(len(images))
+#print(len(ground_truth))
+
 set, label = sort_no_training(images, ground_truth)
 
-#---DEFINE RESULT
+#sort_training_test(int(0.75*len_files), images, ground_truth)
+
+#---DEFINE RESULT---#
 results = np.ndarray(shape=(6, len(set)), dtype=float)
+
+#---DEFINE DETECT---#
+spl, conv_net = detect_init('tree_reduced')
 
 #---BENCHMARK LOOP---#
 for k in range(len(set)):
@@ -87,7 +97,7 @@ for k in range(len(set)):
     print(barre_code)
 
     #OPENCV
-    barre_code, decoded_info, decoded_type = cv_barcode_detector.detectAndDecode((im_g*255).astype(np.uint8))
+    barre_code, decoded_info, decoded_type = cv_barcode_detector.detectAndDecode(im_g)
     results[CVBD, k] = reward(barre_code, label[k])
     print(barre_code)
 
@@ -97,7 +107,7 @@ for k in range(len(set)):
     print(barre_code)
 
     #DETECT
-    barre_code = detect_unsupervised(im_g, 'tree_reduced')
+    barre_code = detect_unsupervised(im_g, spl, conv_net)
     results[DETECT, k] = reward(barre_code, label[k])
     print(barre_code)
 
@@ -116,7 +126,7 @@ counts_cond, bins = np.histogram(results[COND,:], bins=10, range=(0.0, 1.0))
 
 heatmap = [counts_zxing.tolist(), counts_pytess.tolist(), counts_cvbd.tolist(), counts_zbar.tolist(), counts_detect.tolist(), counts_cond.tolist()]
 
-f_save = open("heatmap_BarcodeTest.csv", "w")
+f_save = open("heatmap_joined_2.csv", "w")
 for i in (ZXING, TESSER, CVBD, ZBAR, DETECT, COND):
     for j in range(len(heatmap[i])):
         f_save.write(str(heatmap[i][j]))

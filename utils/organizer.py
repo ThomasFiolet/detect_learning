@@ -11,27 +11,46 @@ def read_files(suffix):
     ground_truth_path = 'data/lists/barre-code-list-' + suffix + '.txt'
 
     files = [f for f in sorted(listdir(image_path)) if isfile(join(image_path,f)) ]
-    files = sorted(files)
+    #files = sorted(files)
     images = np.empty(len(files), dtype=object)
     for k in range(0, len(files)):
         images[k] = cv2.imread(join(image_path,files[k]))
 
-    if suffix == 'BarcodeTestDataset' :
-        ground_truth = []
-        for k in range(0, len(files)):
-            with open('data/lists/result.csv') as csv_file:
-                csv_reader = csv.reader(csv_file, delimiter=',')
-                for row in csv_reader:
-                    if row[0] == files[k]:
-                        ground_truth.append(row[1])
-
-    else:
-        ground_truth_file = open(ground_truth_path, 'r')
-        ground_truth = ground_truth_file.read().splitlines()
+    ground_truth_file = open(ground_truth_path, 'r')
+    ground_truth = ground_truth_file.read().splitlines()
 
     len_files = len(files)
 
     return images, ground_truth, len_files
+
+def read_join_dataset(suffix_list):
+
+    images_joined = None
+    ground_truth_joined = []
+    len_filed_joined = 0
+
+    for suffix in suffix_list:
+
+        image_path = 'data/' + suffix
+        ground_truth_path = 'data/lists/barre-code-list-' + suffix + '.txt'
+
+        files = [f for f in sorted(listdir(image_path)) if isfile(join(image_path,f)) ]
+        #files = sorted(files)
+        images = np.empty(len(files), dtype=object)
+        for k in range(0, len(files)):
+            images[k] = cv2.imread(join(image_path,files[k]))
+
+        ground_truth_file = open(ground_truth_path, 'r')
+        ground_truth = ground_truth_file.read().splitlines()
+
+        len_files = len(files)
+
+        if images_joined is None: images_joined = images
+        else: images_joined = np.concatenate((images_joined, images))
+        ground_truth_joined = ground_truth_joined + ground_truth
+        len_filed_joined = len_filed_joined + len_files
+
+    return images_joined, ground_truth_joined, len_filed_joined
 
 def read_functions(folder):
     source_file = "functions/" + folder + "/sources"

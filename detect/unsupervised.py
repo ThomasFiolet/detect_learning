@@ -17,15 +17,12 @@ from utils import read_functions
 from utils import iter_extract
 from metrics import reward
 
-def detect_unsupervised(im_g, function_folder):
+def detect_unsupervised(im_g, spl, conv_net):
 
     PIPE = 1
     SOURCE = 0
     SINK = 2
 
-    source_file, pipes_file, sinks_file, adjacency_file = read_functions(function_folder)
-    conv_net = Conv()
-    spl = Sample(source_file, sinks_file, pipes_file, adjacency_file, conv_net)
     pipeline = Pipeline()
 
     down_width = 128
@@ -84,7 +81,7 @@ def detect_unsupervised(im_g, function_folder):
 
         i += 1
         if random.random() > 0.5: complexity += 1
-        rand_eps += 0.2
+        rand_eps += 0.05
         #print(complexity)
         #print(rand_eps)
 

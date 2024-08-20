@@ -1,4 +1,4 @@
 self.barre_code = zxing(im, zxingcpp.BarcodeFormat.EAN13)
 self.barre_code = tesser(im)
-barre_code, decoded_info, decoded_type = cv_barcode_detector.detectAndDecode((im_g*255).astype(np.uint8))
+barre_code, decoded_info, decoded_type = cv_barcode_detector.detectAndDecode(im)
 self.barre_code = zbar(im)
