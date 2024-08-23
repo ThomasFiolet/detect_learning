@@ -69,9 +69,9 @@ images, ground_truth, len_files = read_join_dataset(['real', 'BarcodeTestDataset
 #print(len(images))
 #print(len(ground_truth))
 
-set, label = sort_no_training(images, ground_truth)
+#set, label = sort_no_training(images, ground_truth)
 
-#sort_training_test(int(0.75*len_files), images, ground_truth)
+training_set, test_set, training_label, test_label = sort_training_test(int(0.75*len_files), images, ground_truth)
 
 #---DEFINE RESULT---#
 results = np.ndarray(shape=(6, len(set)), dtype=float)
