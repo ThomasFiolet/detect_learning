@@ -31,7 +31,7 @@ def detect_unsupervised(im_g, spl, conv_net):
     complexity = 2
     rand_eps = 0.0
     score_eps = 0.2
-    max_try = 50
+    max_try = 20
     i = 0
     score = 1
     barre_code = None
@@ -67,22 +67,15 @@ def detect_unsupervised(im_g, spl, conv_net):
         if pipeline.reward < score:
             score = pipeline.reward
             barre_code = pipeline.barre_code
-        #print(pipeline.reward)
 
-        #score = reward(pipeline.barre_code, None)
-
-        #print('---pipeline---')
-        #for i in range(50):
-        for alg in pipeline.graph:
-            #print(alg)
-            if spl.graph.nodes[alg]['subset'] != SINK :
-                spl.graph.nodes[alg]['learner'].train(spl.graph.nodes[alg]['QTable'].last_prediction, pipeline.reward)
-        #print('---------')
+        if pipeline.reward < 0.3:
+            for alg in pipeline.graph:
+                #print(alg)
+                if spl.graph.nodes[alg]['subset'] != SINK :
+                    spl.graph.nodes[alg]['learner'].train(spl.graph.nodes[alg]['QTable'].last_prediction, pipeline.reward)
 
         i += 1
         if random.random() > 0.5: complexity += 1
-        rand_eps += 0.05
-        #print(complexity)
-        #print(rand_eps)
+        rand_eps += 0.1
 
     return barre_code

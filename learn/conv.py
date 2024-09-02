@@ -31,8 +31,8 @@ class Conv(nn.Module):
         self.fc3 = nn.Linear(30, 30)
         nn.init.constant_(self.fc3.weight, 0)
 
-        self.fc4 = nn.Linear(30, 30)
-        nn.init.constant_(self.fc4.weight, 0)
+        #self.fc4 = nn.Linear(30, 30)
+        #nn.init.constant_(self.fc4.weight, 0)
         
         #self.conv4 = nn.Conv2d(1, 1, 5)
         #nn.init.constant_(self.conv4.weight, 0)
@@ -59,7 +59,7 @@ class Conv(nn.Module):
         f1 = m(self.fc1(c_im))
         f2 = m(self.fc2(f1))
         f3 = m(self.fc3(f2))
-        f4 = m(self.fc4(f3))
+        #f4 = m(self.fc4(f3))
 
         # #514
         # c1 = F.relu(self.conv1(input))
@@ -76,4 +76,4 @@ class Conv(nn.Module):
         
         #print("Output :")
         #print(output)
-        return f4
+        return f3

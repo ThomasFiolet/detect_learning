@@ -33,6 +33,7 @@ from metrics import reward
 from detect import detect_init
 from detect import detect_unsupervised
 from detect import detect_supervised
+from detect import detect_learning
 
 #---CONSTANT DEFINITION---#
 ZXING = 0
@@ -64,56 +65,59 @@ batch_size = 40
 #     detect_supervised(set[k], label[k], 'tree')
 
 #---GET DATA---#
-suffix = 'real'
+#suffix = 'real'
 images, ground_truth, len_files = read_join_dataset(['real', 'BarcodeTestDataset'])
 #print(len(images))
 #print(len(ground_truth))
 
 #set, label = sort_no_training(images, ground_truth)
 
-training_set, test_set, training_label, test_label = sort_training_test(int(0.75*len_files), images, ground_truth)
+training_set, test_set, training_label, test_label = sort_training_test(int(0.05*len_files), images, ground_truth)
 
 #---DEFINE RESULT---#
-results = np.ndarray(shape=(6, len(set)), dtype=float)
+results = np.ndarray(shape=(6, len(test_set)), dtype=float)
 
 #---DEFINE DETECT---#
 spl, conv_net = detect_init('tree_reduced')
 
+#---TRAIN DETECT---#
+detect_learning(training_set, training_label, spl, conv_net)
+
 #---BENCHMARK LOOP---#
-for k in range(len(set)):
-    im_g = cv2.cvtColor(set[k], cv2.COLOR_BGR2GRAY)
+for k in range(len(test_set)):
+    im_g = cv2.cvtColor(test_set[k], cv2.COLOR_BGR2GRAY)
     im_g = cv2.rotate(im_g, cv2.ROTATE_180)
     print('--------------------------------------------')
-    print('Testing image ' + str(k) + ' : ' + str(label[k]))
+    print('Testing image ' + str(k) + ' : ' + str(test_label[k]))
 
     #ZXING
     barre_code = zxing(im_g, zxingcpp.BarcodeFormat.EAN13)
-    results[ZXING, k] = reward(barre_code, label[k])
+    results[ZXING, k] = reward(barre_code, test_label[k])
     print(barre_code)
 
     #TESSERACT
     barre_code = tesser(im_g)
-    results[TESSER, k] = reward(barre_code, label[k])
+    results[TESSER, k] = reward(barre_code, test_label[k])
     print(barre_code)
 
     #OPENCV
     barre_code, decoded_info, decoded_type = cv_barcode_detector.detectAndDecode(im_g)
-    results[CVBD, k] = reward(barre_code, label[k])
+    results[CVBD, k] = reward(barre_code, test_label[k])
     print(barre_code)
 
     #ZBAR
     barre_code = zbar(im_g)
-    results[ZBAR, k] = reward(barre_code, label[k])
-    print(barre_code)
-
-    #DETECT
-    barre_code = detect_unsupervised(im_g, spl, conv_net)
-    results[DETECT, k] = reward(barre_code, label[k])
+    results[ZBAR, k] = reward(barre_code, test_label[k])
     print(barre_code)
 
     #COND
     barre_code = conditionnal(im_g)
-    results[COND, k] = reward(barre_code, label[k])
+    results[COND, k] = reward(barre_code, test_label[k])
+    print(barre_code)
+
+    #DETECT
+    barre_code = detect_unsupervised(im_g, spl, conv_net)
+    results[DETECT, k] = reward(barre_code, test_label[k])
     print(barre_code)
 
 bin_step = 0.1
@@ -121,12 +125,12 @@ counts_zxing, bins = np.histogram(results[ZXING,:], bins=10, range=(0.0, 1.0))
 counts_pytess, bins = np.histogram(results[TESSER,:], bins=10, range=(0.0, 1.0))
 counts_cvbd, bins = np.histogram(results[CVBD,:], bins=10, range=(0.0, 1.0))
 counts_zbar, bins = np.histogram(results[ZBAR,:], bins=10, range=(0.0, 1.0))
-counts_detect, bins = np.histogram(results[DETECT,:], bins=10, range=(0.0, 1.0))
 counts_cond, bins = np.histogram(results[COND,:], bins=10, range=(0.0, 1.0))
+counts_detect, bins = np.histogram(results[DETECT,:], bins=10, range=(0.0, 1.0))
 
-heatmap = [counts_zxing.tolist(), counts_pytess.tolist(), counts_cvbd.tolist(), counts_zbar.tolist(), counts_detect.tolist(), counts_cond.tolist()]
+heatmap = [counts_zxing.tolist(), counts_pytess.tolist(), counts_cvbd.tolist(), counts_zbar.tolist(), counts_cond.tolist(), counts_detect.tolist()]
 
-f_save = open("heatmap_joined_2.csv", "w")
+f_save = open("heatmap_trained_0.csv", "w")
 for i in (ZXING, TESSER, CVBD, ZBAR, DETECT, COND):
     for j in range(len(heatmap[i])):
         f_save.write(str(heatmap[i][j]))

@@ -17,8 +17,8 @@ class QSwitch(nn.Module):
         self.fc5 = nn.Linear(30, n_outputs)
         nn.init.constant_(self.fc5.weight, 0)
 
-        #self.fc4 = nn.Linear(30, n_outputs)
-        #nn.init.constant_(self.fc4.weight, 0)
+        self.fc4 = nn.Linear(30, 30)
+        nn.init.constant_(self.fc4.weight, 0)
 
         #self.layer = nn.Linear(1 * 25 * 25, n_outputs)
         #nn.init.constant_(self.layer.weight, 0)
@@ -31,8 +31,8 @@ class QSwitch(nn.Module):
 
         m = nn.Sigmoid()
         
-        f5 = m(self.fc5(input))
-        #f4 = m(self.fc4(f3))
+        f4 = m(self.fc4(input))
+        f5 = m(self.fc5(f4))
 
         output = f5
         self.last_prediction = output[0]
