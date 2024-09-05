@@ -27,29 +27,35 @@ from utils import read_files
 from utils import sort_no_training
 from utils import conditionnal
 
-down_width = 512
-down_height = 512
-down_points = (down_width, down_height)
+# down_width = 512
+# down_height = 512
+# down_points = (down_width, down_height)
 
-#im_g = cv2.imread("data/real/img_1674223566_547149.jpg")
-im_g = cv2.imread("data/real/img_1674228168_236512.jpg")
-#im_g = cv2.resize(im_g, down_points, interpolation= cv2.INTER_LINEAR)
-im_g = cv2.cvtColor(im_g, cv2.COLOR_BGR2GRAY)
-im_g = cv2.rotate(im_g, cv2.ROTATE_180)
+# #im_g = cv2.imread("data/real/img_1674223566_547149.jpg")
+# im_g = cv2.imread("data/real/img_1674228168_236512.jpg")
+# #im_g = cv2.resize(im_g, down_points, interpolation= cv2.INTER_LINEAR)
+# im_g = cv2.cvtColor(im_g, cv2.COLOR_BGR2GRAY)
+# im_g = cv2.rotate(im_g, cv2.ROTATE_180)
 
-im = im_g
-#sucess, im = saliency.computeSaliency(im)
-#im = cv2.equalizeHist((im*255).astype(np.uint8))
-#cv2.imshow('image', im)
-#cv2.waitKey(0)
-cv2.imwrite('./figures/image_0.png', im)
+# im = im_g
+# #sucess, im = saliency.computeSaliency(im)
+# #im = cv2.equalizeHist((im*255).astype(np.uint8))
+# #cv2.imshow('image', im)
+# #cv2.waitKey(0)
+# cv2.imwrite('./figures/image_0.png', im)
 
-im = cv2.equalizeHist(im.astype(np.uint8))
-cv2.imwrite('./figures/image_1.png', im)
+# im = cv2.equalizeHist(im.astype(np.uint8))
+# cv2.imwrite('./figures/image_1.png', im)
 
-th, im = cv2.threshold(im, 128, 255, cv2.THRESH_BINARY)
-cv2.imwrite('./figures/image_2.png', im)
+# th, im = cv2.threshold(im, 128, 255, cv2.THRESH_BINARY)
+# cv2.imwrite('./figures/image_2.png', im)
 
-barre_code, decoded_info, decoded_type = cv_barcode_detector.detectAndDecode(im.astype(np.uint8))
-print(barre_code)
-# cv2.imwrite('./figures/image_3.png', im)
+# barre_code, decoded_info, decoded_type = cv_barcode_detector.detectAndDecode(im.astype(np.uint8))
+# print(barre_code)
+# # cv2.imwrite('./figures/image_3.png', im)
+
+with open('maps/europe/distances', 'r') as data:
+    plaintext = data.read()
+
+plaintext = plaintext.replace(',', ' ')
+print(plaintext)
