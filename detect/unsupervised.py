@@ -16,8 +16,9 @@ from learn import Conv
 from utils import read_functions
 from utils import iter_extract
 from metrics import reward
+from metrics import compute_image_metrics
 
-def detect_unsupervised(im_g, spl, conv_net):
+def detect_unsupervised(im_g, spl, conv_net, test_metrics):
 
     PIPE = 1
     SOURCE = 0
@@ -47,7 +48,11 @@ def detect_unsupervised(im_g, spl, conv_net):
             im_p = pipeline.browse(im_g)
             im_s = cv2.resize(im_p, down_points, interpolation= cv2.INTER_LINEAR)
             im_t = transforms.ToTensor()(im_s).to(torch.device("cuda:0" if torch.cuda.is_available() else "cpu"))
-            c_im = conv_net.forward(im_t)
+            if conv_net is None:
+                                brightness, contrast, sal, remarkability, sharpness, bluriness, maximum, minimum = test_metrics
+                                c_im = torch.tensor([brightness, contrast, sal, remarkability, sharpness, bluriness, maximum, minimum], dtype=torch.float32)
+            else:
+                c_im = conv_net.forward(im_t)
             if random.random() < rand_eps:
                 idx = random.randrange(0, sum(1 for _ in spl.graph.successors(spl.current_node)))
                 spl.graph.nodes[spl.current_node]['QTable'].forward(c_im)

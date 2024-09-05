@@ -27,11 +27,6 @@ class Sample:
 
         self.N_nodes = self.N_sources + self.N_sinks + self.N_pipes
 
-        # self.adjacency = np.ones((self.N_nodes, self.N_nodes))
-        # for i in range(1, self.N_sources): self.adjacency[i][0] = 0
-        # for i in range(self.N_nodes - self.N_sinks, self.N_nodes):
-        #     for j in range(0, self.N_nodes) : self.adjacency[i][j] = 0
-
         self.adjacency = np.loadtxt(adjacency_file)
 
         self.graph = nx.DiGraph()
@@ -40,8 +35,6 @@ class Sample:
         for i in range(0, self.adjacency.shape[0]):
             for j in range(0, self.adjacency.shape[1]):
                 if (self.adjacency[i][j] != 0).all():
-                    #subset_i = SOURCE*(i < self.N_sources) + SINK*(i > self.N_sinks)
-                    #subset_j = SOURCE*(j < self.N_sources) + SINK*(j > self.N_sinks)
                     self.edges_list.append((node_string[i], node_string[j], self.adjacency[i][j]))
 
         self.graph.add_weighted_edges_from(self.edges_list)
@@ -55,9 +48,13 @@ class Sample:
             if name == "''.join": self.graph.nodes[node]['name'] = "tesserocr.image_to_text"
 
             n_outputs = sum(1 for _ in self.graph.successors(node))
-            if n_outputs != 0: 
-                self.graph.nodes[node]['QTable'] = QSwitch(n_outputs)
-                self.graph.nodes[node]['learner'] = Learner(conv_net.parameters(), self.graph.nodes[node]['QTable'].parameters())
+            if n_outputs != 0:
+                if conv_net is None:
+                    self.graph.nodes[node]['QTable'] = QSwitch(n_outputs, False)
+                    self.graph.nodes[node]['learner'] = Learner(None, self.graph.nodes[node]['QTable'].parameters())
+                else:
+                    self.graph.nodes[node]['QTable'] = QSwitch(n_outputs, True)
+                    self.graph.nodes[node]['learner'] = Learner(conv_net.parameters(), self.graph.nodes[node]['QTable'].parameters())
 
             for alg in sources_string:
                 if node == alg: self.graph.nodes[node]['subset'] = SOURCE

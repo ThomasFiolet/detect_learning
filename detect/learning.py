@@ -34,13 +34,14 @@ from learn import Conv
 from utils import read_functions
 from utils import iter_extract
 from metrics import reward
+from metrics import compute_image_metrics
 
 down_width = 128
 down_height = 128
 down_points = (down_width, down_height)
-EPOCH = 20
+EPOCH = 100
 
-def detect_learning(training_set, training_label, spl, conv_net):
+def detect_learning(training_set, training_label, spl, conv_net, training_metrics):
 
     PIPE = 1
     SOURCE = 0
@@ -97,6 +98,7 @@ def detect_learning(training_set, training_label, spl, conv_net):
         print("Training epoch " + str(k))
         for i in range(len(pipeline_list_good)):
             for j in range(len(training_set)):
+                #print(str(i) + " " + str(j))
                 if cross_table[i][j] == 1:
                     im_g = cv2.cvtColor(training_set[j], cv2.COLOR_BGR2GRAY)
                     im_g = cv2.rotate(im_g, cv2.ROTATE_180)
@@ -107,6 +109,11 @@ def detect_learning(training_set, training_label, spl, conv_net):
                             im_p = im
                             im_s = cv2.resize(im_p, down_points, interpolation= cv2.INTER_LINEAR)
                             im_t = transforms.ToTensor()(im_s).to(torch.device("cuda:0" if torch.cuda.is_available() else "cpu"))
-                            c_im = conv_net.forward(im_t)
+
+                            if conv_net is None:
+                                brightness, contrast, sal, remarkability, sharpness, bluriness, maximum, minimum = training_metrics[j]
+                                c_im = torch.tensor([brightness, contrast, sal, remarkability, sharpness, bluriness, maximum, minimum], dtype=torch.float32)
+                            else:
+                                c_im = conv_net.forward(im_t)
                             spl.graph.nodes[alg]['QTable'].forward(c_im)
                             spl.graph.nodes[alg]['learner'].train(spl.graph.nodes[alg]['QTable'].last_prediction, ppl.reward)
