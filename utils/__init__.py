@@ -4,6 +4,7 @@ from .wrap import tesser
 from .wrap import zbar
 from .wrap import conditionnal
 from .iterutil import iter_extract
+from .iterutil import indx_extract
 from .organizer import read_files
 from .organizer import read_join_dataset
 from .organizer import read_functions

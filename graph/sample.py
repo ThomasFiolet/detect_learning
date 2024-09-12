@@ -48,12 +48,14 @@ class Sample:
             if name == "''.join": self.graph.nodes[node]['name'] = "tesserocr.image_to_text"
 
             n_outputs = sum(1 for _ in self.graph.successors(node))
+            if conv_net is None : n_inputs = 8
+            else : n_inputs = 30
             if n_outputs != 0:
                 if conv_net is None:
-                    self.graph.nodes[node]['QTable'] = QSwitch(n_outputs, False)
+                    self.graph.nodes[node]['QTable'] = QSwitch(n_inputs, n_outputs, False)
                     self.graph.nodes[node]['learner'] = Learner(None, self.graph.nodes[node]['QTable'].parameters())
                 else:
-                    self.graph.nodes[node]['QTable'] = QSwitch(n_outputs, True)
+                    self.graph.nodes[node]['QTable'] = QSwitch(n_inputs, n_outputs, True)
                     self.graph.nodes[node]['learner'] = Learner(conv_net.parameters(), self.graph.nodes[node]['QTable'].parameters())
 
             for alg in sources_string:
@@ -195,9 +197,10 @@ class Map:
             name = node
             self.graph.nodes[node]['name'] = name
 
+            n_inputs = self.graph.number_of_nodes()
             n_outputs = sum(1 for _ in self.graph.successors(node))
             if n_outputs != 0:
-                self.graph.nodes[node]['QTable'] = QSwitch(n_outputs, False)
+                self.graph.nodes[node]['QTable'] = QSwitch(n_inputs, n_outputs, False)
                 self.graph.nodes[node]['learner'] = Learner(None, self.graph.nodes[node]['QTable'].parameters())
 
     def find_output_idx(self, output):

@@ -9,7 +9,7 @@ from itertools import product
 import cv2 as cv2
 import numpy as np
 import torch
-torch.set_default_device('cuda')
+torch.set_default_device('cpu')
 import torchvision.transforms as transforms
 import networkx as nx
 from processing_py import *
@@ -116,4 +116,14 @@ def detect_learning(training_set, training_label, spl, conv_net, training_metric
                             else:
                                 c_im = conv_net.forward(im_t)
                             spl.graph.nodes[alg]['QTable'].forward(c_im)
-                            spl.graph.nodes[alg]['learner'].train(spl.graph.nodes[alg]['QTable'].last_prediction, ppl.reward)
+
+                            target = torch.clone(spl.graph.nodes[alg]['QTable'].last_prediction)
+                            for k, t in enumerate(target):
+                                target[:][k] = 1 - reward
+                            if spl.graph.nodes[alg]['learner'].choosen_idx >= 0 and spl.graph.nodes[alg]['learner'].choosen_idx < len(target):
+                                target[:][spl.graph.nodes[alg]['learner'].choosen_idx] = reward
+                            else:
+                                idx = torch.argmin(target)
+                                target[:][idx] = reward
+
+                            spl.graph.nodes[alg]['learner'].train(spl.graph.nodes[alg]['QTable'].last_prediction, target)
