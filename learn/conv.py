@@ -15,50 +15,40 @@ class Conv(nn.Module):
 
         self.conv1 = nn.Conv2d(1, 1, 5)
         nn.init.constant_(self.conv1.weight, 0)
+        self.activation1 = nn.Sigmoid()
         
         self.conv2 = nn.Conv2d(1, 1, 5)
         nn.init.constant_(self.conv2.weight, 0)
-        
-        self.conv3 = nn.Conv2d(1, 1, 5)
-        nn.init.constant_(self.conv3.weight, 0)
-
-        self.fc1 = nn.Linear(1 * 25 * 25, 30)
-        nn.init.constant_(self.fc1.weight, 0)
-
-        self.fc2 = nn.Linear(30, 30)
-        nn.init.constant_(self.fc2.weight, 0)
-
-        self.fc3 = nn.Linear(30, 30)
-        nn.init.constant_(self.fc3.weight, 0)
-
-        #self.fc4 = nn.Linear(30, 30)
-        #nn.init.constant_(self.fc4.weight, 0)
-        
-        #self.conv4 = nn.Conv2d(1, 1, 5)
-        #nn.init.constant_(self.conv4.weight, 0)
+        self.activation2 = nn.Sigmoid()
     
     def forward(self, input):
 
-        m = nn.Sigmoid()
+        x = self.conv1(input)           #124
+        x = self.activation1(x)
+        x = F.max_pool2d(x, (2,2))   #62
+        x = self.conv2(x)               #58
+        x = self.activation2(x)
+        x = F.max_pool2d(x, (2,2))   #29
+        x = x.reshape([1, 1 * 29 * 29])
         
         #128
-        c1 = m(self.conv1(input))
+        #c1 = m(self.conv1(input))
         #124
-        s1 = F.max_pool2d(c1, (2,2))
+        #s1 = F.max_pool2d(c1, (2,2))
         #62
-        c2 = m(self.conv2(s1))
+        #c2 = m(self.conv2(s1))
         #58
-        s2 = F.max_pool2d(c2, (2,2))
+        #s2 = F.max_pool2d(c2, (2,2))
         #29
-        c3 = m(self.conv3(s2))
+        #c3 = m(self.conv3(s2))
         #25
         #c4 = m(self.conv4(c3))
         #21
-        c_im = c3.reshape([1, 1 * 25 * 25])
+        #c_im = c3.reshape([1, 1 * 25 * 25])
 
-        f1 = m(self.fc1(c_im))
-        f2 = m(self.fc2(f1))
-        f3 = m(self.fc3(f2))
+        #f1 = m(self.fc1(c_im))
+        #f2 = m(self.fc2(f1))
+        #f3 = m(self.fc3(f2))
         #f4 = m(self.fc4(f3))
 
         # #514
@@ -76,4 +66,4 @@ class Conv(nn.Module):
         
         #print("Output :")
         #print(output)
-        return f3
+        return x

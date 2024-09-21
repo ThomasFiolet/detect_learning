@@ -32,7 +32,7 @@ class Pipeline:
         self.barre_code = ""
         self.horizon = 8
         self.complexity = 2
-        self.working_im_idx = []
+        self.working_im = []
 
     def zero_data(self):
         self.graph.clear()

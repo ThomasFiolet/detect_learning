@@ -9,7 +9,10 @@ from itertools import product
 import cv2 as cv2
 import numpy as np
 import torch
-torch.set_default_device('cpu')
+import torch.nn as nn
+import torch.nn.functional as F
+import torch.optim as optim
+torch.set_default_device('cuda')
 import torchvision.transforms as transforms
 import networkx as nx
 from processing_py import *
@@ -33,13 +36,14 @@ from graph import Pipeline
 from learn import Conv
 from utils import read_functions
 from utils import iter_extract
+from utils import indx_extract
 from metrics import reward
 from metrics import compute_image_metrics
 
 down_width = 128
 down_height = 128
 down_points = (down_width, down_height)
-EPOCH = 100
+EPOCH = 50
 
 def detect_learning(training_set, training_label, spl, conv_net, training_metrics):
 
@@ -69,41 +73,51 @@ def detect_learning(training_set, training_label, spl, conv_net, training_metric
 
     print(str(len(pipeline_list)) + " pipelines generated")
 
-    for ppl, (im_b, lbl) in product(pipeline_list, zip(training_set, training_label)):
-        im_g = cv2.cvtColor(im_b, cv2.COLOR_BGR2GRAY)
-        im_g = cv2.rotate(im_g, cv2.ROTATE_180)
-        ppl.browse(im_g)
-        ppl.score(lbl)
-        if ppl.reward == 0:
-            pipeline_list_good.append(ppl)
+    cross_table = [[0] * len(training_set)] * len(training_set)
 
-        if len(pipeline_list_good) >= len(training_set): break
-
-    print(str(len(pipeline_list_good)) + " pipelines with a positive score")
-
-    cross_table = [[0] * len(training_set)] * len(pipeline_list_good)
-
-    for i in range(len(pipeline_list_good)):
-        for j in range(len(training_set)):
-            print(str(i) + " " + str(j))
-            im_g = cv2.cvtColor(training_set[j], cv2.COLOR_BGR2GRAY)
+    #for i in range(len(pipeline_list)):
+    #    for j in range(len(training_set)):
+            #print("Filter pipeline " + str(i) + " with data " + str(j))
+    for ppl in pipeline_list:
+        for im_b, lbl in zip(training_set, training_label):
+            print('test')
+            im_g = cv2.cvtColor(im_b, cv2.COLOR_BGR2GRAY)
             im_g = cv2.rotate(im_g, cv2.ROTATE_180)
             ppl.browse(im_g)
             ppl.score(lbl)
             if ppl.reward == 0:
-                cross_table[i][j] = 1
+                ppl.working_im.append(im_b)
+        pipeline_list_good.append(ppl)
+            #cross_table[i][j] = 1
+
+        #if len(pipeline_list_good) >= len(training_set): break
+
+    print(str(len(pipeline_list_good)) + " pipelines with a positive score")
+
+    # cross_table = [[0] * len(training_set)] * len(pipeline_list_good)
+
+    # for i in range(len(pipeline_list_good)):
+    #     for j in range(len(training_set)):
+    #         print("Filter pipeline " + str(i) + " with data " + str(j))
+    #         im_g = cv2.cvtColor(training_set[j], cv2.COLOR_BGR2GRAY)
+    #         im_g = cv2.rotate(im_g, cv2.ROTATE_180)
+    #         ppl.browse(im_g)
+    #         ppl.score(lbl)
+    #         if ppl.reward == 0:
+    #             cross_table[i][j] = 1
 
     #Training
+    criterion = nn.CrossEntropyLoss()
     for k in range(0, EPOCH):
+        loss_epoch = 0
         print("Training epoch " + str(k))
         for i in range(len(pipeline_list_good)):
             for j in range(len(training_set)):
-                #print(str(i) + " " + str(j))
                 if cross_table[i][j] == 1:
                     im_g = cv2.cvtColor(training_set[j], cv2.COLOR_BGR2GRAY)
                     im_g = cv2.rotate(im_g, cv2.ROTATE_180)
                     im = im_g
-                    for alg in ppl.graph.nodes:
+                    for alg in pipeline_list_good[i].graph.nodes:
                         if spl.graph.nodes[alg]['subset'] != SINK :
                             exec(alg)
                             im_p = im
@@ -115,15 +129,30 @@ def detect_learning(training_set, training_label, spl, conv_net, training_metric
                                 c_im = torch.tensor([brightness, contrast, sal, remarkability, sharpness, bluriness, maximum, minimum], dtype=torch.float32)
                             else:
                                 c_im = conv_net.forward(im_t)
-                            spl.graph.nodes[alg]['QTable'].forward(c_im)
 
+                            output = spl.graph.nodes[alg]['QTable'].forward(c_im)
                             target = torch.clone(spl.graph.nodes[alg]['QTable'].last_prediction)
-                            for k, t in enumerate(target):
-                                target[:][k] = 1 - reward
-                            if spl.graph.nodes[alg]['learner'].choosen_idx >= 0 and spl.graph.nodes[alg]['learner'].choosen_idx < len(target):
-                                target[:][spl.graph.nodes[alg]['learner'].choosen_idx] = reward
-                            else:
-                                idx = torch.argmin(target)
-                                target[:][idx] = reward
+                            for k, t in enumerate(target): target[:][k] = 1 - pipeline_list_good[i].reward
+                            succ = spl.graph.successors(alg)
+                            next_alg = iter_extract(pipeline_list_good[i].graph.successors(alg), 0) 
+                            oidx = indx_extract(succ, next_alg)
+                            target[0][oidx] = pipeline_list_good[i].reward
 
-                            spl.graph.nodes[alg]['learner'].train(spl.graph.nodes[alg]['QTable'].last_prediction, target)
+                            parameters = list(conv_net.parameters()) + list(spl.graph.nodes[alg]['QTable'].parameters())
+                            optimizer = optim.SGD(parameters, lr=0.1, momentum=0.9)
+                            loss = criterion(output, target)
+                            loss.backward()
+                            loss_epoch += loss.item()
+                            optimizer.step()
+                            optimizer.zero_grad()
+        print("Epoch loss : " + str(loss_epoch))
+
+                            # for k, t in enumerate(target):
+                            #     target[:][k] = 1 - reward
+                            # if spl.graph.nodes[alg]['learner'].choosen_idx >= 0 and spl.graph.nodes[alg]['learner'].choosen_idx < len(target):
+                            #     target[:][spl.graph.nodes[alg]['learner'].choosen_idx] = reward
+                            # else:
+                            #     idx = torch.argmin(target)
+                            #     target[:][idx] = reward
+
+                            # spl.graph.nodes[alg]['learner'].train(spl.graph.nodes[alg]['QTable'].last_prediction, target)

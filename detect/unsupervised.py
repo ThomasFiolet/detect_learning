@@ -6,6 +6,9 @@ import math
 import cv2 as cv2
 import numpy as np
 import torch
+import torch.nn as nn
+import torch.nn.functional as F
+import torch.optim as optim
 torch.set_default_device('cuda')
 import torchvision.transforms as transforms
 import networkx as nx
@@ -73,11 +76,25 @@ def detect_unsupervised(im_g, spl, conv_net, test_metrics):
             score = pipeline.reward
             barre_code = pipeline.barre_code
 
-        if pipeline.reward < 0.3:
-            for alg in pipeline.graph:
-                #print(alg)
-                if spl.graph.nodes[alg]['subset'] != SINK :
-                    spl.graph.nodes[alg]['learner'].train(spl.graph.nodes[alg]['QTable'].last_prediction, pipeline.reward)
+        # if pipeline.reward < 0.3:
+        #     for alg in pipeline.graph:
+        #         #print(alg)
+        #         if spl.graph.nodes[alg]['subset'] != SINK :
+        #             criterion = nn.CrossEntropyLoss()
+        #             output = spl.graph.nodes[alg]['QTable'].last_prediction
+        #             parameters = list(conv_net.parameters()) + list(spl.graph.nodes[alg]['QTable'].parameters())
+        #             optimizer = optim.SGD(parameters, lr=0.1, momentum=0.9)
+
+        #             target = torch.clone(spl.graph.nodes[alg]['QTable'].last_prediction)
+        #             for k, t in enumerate(target): target[:][k] = 1 - pipeline.reward
+        #             oidx = torch.argmin(spl.graph.nodes[alg]['QTable'].last_prediction)
+        #             target[0][oidx] = pipeline.reward
+        #             loss = criterion(output, target)
+        #             loss.backward()
+        #             optimizer.step()
+        #             optimizer.zero_grad()
+
+                #spl.graph.nodes[alg]['learner'].train(spl.graph.nodes[alg]['QTable'].last_prediction, pipeline.reward)
 
         i += 1
         if random.random() > 0.5: complexity += 1

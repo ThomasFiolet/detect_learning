@@ -49,7 +49,7 @@ class Sample:
 
             n_outputs = sum(1 for _ in self.graph.successors(node))
             if conv_net is None : n_inputs = 8
-            else : n_inputs = 30
+            else : n_inputs = 29*29
             if n_outputs != 0:
                 if conv_net is None:
                     self.graph.nodes[node]['QTable'] = QSwitch(n_inputs, n_outputs, False)
