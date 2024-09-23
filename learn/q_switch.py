@@ -14,11 +14,11 @@ class QSwitch(nn.Module):
 
         self.linear1 = nn.Linear(n_inputs, 30)
         nn.init.uniform_(self.linear1   .weight, a=0, b=1.0)
-        self.activation1 = nn.Sigmoid()
+        self.activation1 = nn.Softplus()
 
         self.linear2 = nn.Linear(30, n_outputs)
         nn.init.uniform_(self.linear2.weight, a=0, b=1.0)
-        self.activation2 = nn.Sigmoid()
+        self.activation2 = nn.Softplus()
 
         self.last_prediction = torch.full((1, n_outputs), 1/n_outputs)
 
