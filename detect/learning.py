@@ -43,7 +43,8 @@ from metrics import compute_image_metrics
 down_width = 128
 down_height = 128
 down_points = (down_width, down_height)
-EPOCH = 50
+n_ppl = 100
+EPOCH = 10
 
 def detect_learning(training_set, training_label, spl, conv_net, training_metrics):
 
@@ -56,7 +57,7 @@ def detect_learning(training_set, training_label, spl, conv_net, training_metric
 
     #Generate Random Pipelines
     print("Generating pipelines")
-    while len(pipeline_list) < len(training_set)*5:
+    while len(pipeline_list) < n_ppl:
         ppl = Pipeline()
         ppl.zero_data()
         spl.current_node = "im = im_g"

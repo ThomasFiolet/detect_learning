@@ -46,7 +46,7 @@ COND = 5
 WIN_W = 800
 WIN_H = 480
 
-batch_size = 40
+training_set_size = 50
 
 #---START PROCESSING---#
 #app = App(WIN_W, WIN_H)
@@ -72,7 +72,7 @@ images, ground_truth, len_files = read_join_dataset(['real', 'BarcodeTestDataset
 
 #set, label = sort_no_training(images, ground_truth)
 
-training_set, test_set, training_label, test_label = sort_training_test(int(0.02*len_files), images, ground_truth)
+training_set, test_set, training_label, test_label = sort_training_test(training_set_size, images, ground_truth)
 
 #---DEFINE RESULT---#
 results = np.ndarray(shape=(6, len(test_set)), dtype=float)
