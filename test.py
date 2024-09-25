@@ -1,4 +1,7 @@
 import os
+import random
+import time
+random.seed(time.time())
 
 import pyzbar
 from pyzbar.pyzbar import decode
@@ -54,8 +57,30 @@ from utils import conditionnal
 # print(barre_code)
 # # cv2.imwrite('./figures/image_3.png', im)
 
-with open('maps/europe/distances', 'r') as data:
-    plaintext = data.read()
+# with open('maps/europe/distances', 'r') as data:
+#     plaintext = data.read()
 
-plaintext = plaintext.replace(',', ' ')
-print(plaintext)
+# plaintext = plaintext.replace(',', ' ')
+# print(plaintext)
+
+def heuristic(map, source, target):
+    try : return map.graph.edges[source, target]['weight']
+    except : return float('inf')
+
+n = random.randint(5,30)
+p = random.random()
+#G = nx.fast_gnp_random_graph(n, p, directed=True)
+G = nx.circular_ladder_graph(15)
+for (u,v,w) in G.edges(data=True):
+    #w['weight'] = random.randint(0,5000)
+    w['weight'] = 1
+
+#source = random.choice(list(G))
+#target = random.choice(list(G))
+
+source = 1
+target = 7
+
+for i in range(30):
+    path = nx.astar_path(G, source=source, target=target, heuristic=None, weight='weight')
+    print(path)

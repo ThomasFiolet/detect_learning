@@ -1,4 +1,6 @@
 import random
+import time
+random.seed(time.time())
 from random import shuffle
 import itertools
 
@@ -7,6 +9,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 torch.set_default_device('cuda')
+from processing_py import *
 
 import networkx as nx
 import numpy as np
@@ -16,17 +19,23 @@ from graph import Railroad
 from utils import iter_extract
 from utils import indx_extract
 
+#---START PROCESSING---#
+WIN_W = 500
+WIN_H = 500
+app = App(WIN_W, WIN_H)
+app.background(255)
+
 N_st_per_node = 4
 dataset_size = 200
-training_size = 160
-testing_size = 40
-EPOCH = 20
+training_size = 60
+testing_size = 140
+EPOCH = 24
 
 map = Map('maps/europe/cities', 'maps/europe/distances')
 
 edges_list = map.graph.edges
 edges_list = np.array(edges_list)
-N_edges_to_remove = int(len(edges_list)/2)
+N_edges_to_remove = int(0.75*len(edges_list))
 
 r = list(range(0, len(edges_list)))
 random.shuffle(r)  
@@ -40,50 +49,52 @@ for e, i in zip(edges_list_random, range(len(edges_list_random))):
     if i > N_edges_to_remove: break
     map.graph.remove_edge(*e)
 
-railroads = []
+railroads_dijkstra = []
+railroads_astar = []
 
-while len(railroads) < dataset_size:
+map.set_pos(WIN_W, WIN_H)
+map.draw(app)
+
+while len(railroads_dijkstra) < dataset_size:
     departure = ''; arrival = ''
 
     while departure == arrival:
         departure = random.choice(list(map.graph))
         arrival = random.choice(list(map.graph))
 
-    path = nx.shortest_path(map.graph, source=departure, target = arrival, weight = 'weight')
+    path_dijkstra = nx.shortest_path(map.graph, source=departure, target = arrival, weight = 'weight')
+    path_astar = nx.astar_path(map.graph, source=departure, target = arrival, weight = 'weight', heuristic = None) #Determinist, no need for heuristic
 
     rl = Railroad()
-    for town in path:
+    for town in path_dijkstra:
         map.current_node = town
         if rl.last_node != '':
             rl.append(map.current_node, map.graph[rl.last_node][map.current_node]['weight'])
-            
         else:
             rl.graph.add_node(map.current_node)
         rl.last_node = map.current_node
-    if rl not in railroads: railroads.append(rl)
+    if rl not in railroads_dijkstra: railroads_dijkstra.append(rl)
 
-# for city in map.graph: 
-#     for k in range(0, N_st_per_node):
-#         path = nx.shortest_path(map.graph, source=city, target = random.choice(list(map.graph)), weight = 'weight')
-#         rl = Railroad()
-#         for town in path:
-#             map.current_node = town
-#             if rl.last_node != '':
-#                 rl.append(map.current_node, map.graph[rl.last_node][map.current_node]['weight'])
-                
-#             else:
-#                 rl.graph.add_node(map.current_node)
-#             rl.last_node = map.current_node
-#         if rl not in railroads: railroads.append(rl)
-
-# print(len(railroads))
+    rl = Railroad()
+    for town in path_astar:
+        map.current_node = town
+        if rl.last_node != '':
+            rl.append(map.current_node, map.graph[rl.last_node][map.current_node]['weight'])
+        else:
+            rl.graph.add_node(map.current_node)
+        rl.last_node = map.current_node
+    if rl not in railroads_astar: railroads_astar.append(rl)
 
 criterion = nn.CrossEntropyLoss()
 
 for k in range(0, EPOCH): 
-    epoch_loss = 0
+
+    for city in map.graph.nodes:
+        map.graph.nodes[city]['c_loss'] = 0
+        map.graph.nodes[city]['i_loss'] = 0
+
     i = 0
-    for railroad in itertools.islice(railroads,0,training_size):
+    for railroad in itertools.islice(railroads_dijkstra, 0, training_size):
         i += 1
         iidx = list(map.graph).index(list(railroad.graph)[-1]) #Get last city
         input = torch.zeros([map.graph.number_of_nodes()], device="cuda")
@@ -104,17 +115,31 @@ for k in range(0, EPOCH):
             optimizer.step()
             optimizer.zero_grad()
 
-            epoch_loss += loss.item()
-    epoch_loss /= map.graph.number_of_nodes()*N_st_per_node
-    print(epoch_loss)
+            map.graph.nodes[city]['c_loss'] += loss.item()
+            map.graph.nodes[city]['i_loss'] += 1
 
-for railroad in itertools.islice(railroads,training_size,training_size + testing_size):
-    optimal_distance = railroad.graph.size(weight="weight")
+    for city in map.graph.nodes:
+        map.graph.nodes[city]['loss'].append(map.graph.nodes[city]['c_loss']/map.graph.nodes[city]['i_loss'])
 
-    departure = list(railroad.graph)[0]
-    arrival = list(railroad.graph)[-1]
+f_save = open("results_shortest/loss.csv", "w")
+for city in map.graph.nodes:
+    f_save.write(map.graph.nodes[city]['name'])
+    f_save.write(";")
+    for l in map.graph.nodes[city]['loss']:
+        f_save.write(str(l))
+        f_save.write(";")
+    f_save.write("\n")
+f_save.close()
 
-    map.current_node = departure
+f_save = open("results_shortest/distance.csv", "w")
+for railroad_d, railroad_a in itertools.islice(zip(railroads_dijkstra, railroads_astar), training_size, training_size + testing_size):
+    optimal_distance = railroad_d.graph.size(weight="weight")
+    heurist_distance = railroad_a.graph.size(weight="weight")
+
+    departure = list(railroad_d.graph)[0]
+    arrival = list(railroad_d.graph)[-1]
+
+    map.current_node = departure    
     current_distance = 0
     print('------------')
     print('Departure : ' + departure + ', arrival : ' + arrival)  
@@ -131,10 +156,30 @@ for railroad in itertools.islice(railroads,training_size,training_size + testing
         current_distance += map.graph[map.current_node][next_city]['weight']
         map.current_node = next_city
         if current_distance > map.graph.size(weight="weight"):
+            print('Optimal distance : ' + str(optimal_distance))
+            print('Heurist distance : ' + str(heurist_distance))
             print('No solution found...')
+            current_distance = 0
             break
 
     if current_distance < map.graph.size(weight="weight"):
         #for city in railroad.graph: print(city)
         print('Optimal distance : ' + str(optimal_distance))
+        print('Heurist distance : ' + str(heurist_distance))
         print('Current distance : ' + str(current_distance))
+
+    f_save.write(departure)
+    f_save.write("-")
+    f_save.write(arrival)
+    f_save.write(";")
+
+    f_save.write(str(optimal_distance))
+    f_save.write(";")
+    f_save.write(str(heurist_distance))
+    f_save.write(";")
+    f_save.write(str(current_distance))
+    f_save.write(";")
+
+    f_save.write("\n")
+
+f_save.close()

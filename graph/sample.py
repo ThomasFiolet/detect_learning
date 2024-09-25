@@ -45,18 +45,16 @@ class Sample:
             name = name.split(' = ', 1)[1]
             self.graph.nodes[node]['name'] = name
 
+            self.graph.nodes[node]['loss'] = []
+            self.graph.nodes[node]['nuse'] = 0
+
             if name == "''.join": self.graph.nodes[node]['name'] = "tesserocr.image_to_text"
 
             n_outputs = sum(1 for _ in self.graph.successors(node))
             if conv_net is None : n_inputs = 8
             else : n_inputs = 29*29
             if n_outputs != 0:
-                if conv_net is None:
-                    self.graph.nodes[node]['QTable'] = QSwitch(n_inputs, n_outputs, False)
-                    self.graph.nodes[node]['learner'] = Learner(None, self.graph.nodes[node]['QTable'].parameters())
-                else:
-                    self.graph.nodes[node]['QTable'] = QSwitch(n_inputs, n_outputs, True)
-                    self.graph.nodes[node]['learner'] = Learner(conv_net.parameters(), self.graph.nodes[node]['QTable'].parameters())
+                self.graph.nodes[node]['QTable'] = QSwitch(n_inputs, n_outputs, False)
 
             for alg in sources_string:
                 if node == alg: self.graph.nodes[node]['subset'] = SOURCE
@@ -197,6 +195,10 @@ class Map:
             name = node
             self.graph.nodes[node]['name'] = name
 
+            self.graph.nodes[node]['loss'] = []
+            self.graph.nodes[node]['c_loss'] = 0
+            self.graph.nodes[node]['i_loss'] = 0
+
             n_inputs = self.graph.number_of_nodes()
             n_outputs = sum(1 for _ in self.graph.successors(node))
             if n_outputs != 0:
@@ -274,9 +276,9 @@ class Map:
                         multiThreaded=False,  # NOT IMPLEMENTED
 
                         # Tuning
-                        scalingRatio=10.0,
+                        scalingRatio=5.0,
                         strongGravityMode=True,
-                        gravity=10.0,
+                        gravity=5.0,
 
                         # Log
                         verbose=True)
@@ -284,9 +286,10 @@ class Map:
         sample_undirected = self.graph.to_undirected()
         sample_numpy = nx.to_numpy_array(sample_undirected)
 
-        pos = nx.multipartite_layout(self.graph, subset_key='subset', align='vertical', center = np.array([0, 0]), scale = 1)
+        #pos = nx.multipartite_layout(self.graph, subset_key='subset', align='vertical', center = np.array([0, 0]), scale = 1)
+        pos = nx.circular_layout(self.graph)
 
-        pos_force = forceatlas2.forceatlas2(sample_numpy, pos=np.asarray(list(pos.values()), dtype=np.float32), iterations = 1)
+        pos_force = forceatlas2.forceatlas2(sample_numpy, pos=np.asarray(list(pos.values()), dtype=np.float32), iterations = 0)
         pos_force_list = list(pos_force)
         for i, k in enumerate(pos):
             pos[k] = pos_force_list[i]

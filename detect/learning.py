@@ -43,8 +43,8 @@ from metrics import compute_image_metrics
 down_width = 128
 down_height = 128
 down_points = (down_width, down_height)
-n_ppl = 100
-EPOCH = 10
+n_ppl = 50
+EPOCH = 15
 
 def detect_learning(training_set, training_label, spl, conv_net, training_metrics):
 
@@ -73,12 +73,8 @@ def detect_learning(training_set, training_label, spl, conv_net, training_metric
             pipeline_list.append(ppl)
 
     print(str(len(pipeline_list)) + " pipelines generated")
+    for ppl in pipeline_list: print(ppl.graph.nodes)
 
-    cross_table = [[0] * len(training_set)] * len(training_set)
-
-    #for i in range(len(pipeline_list)):
-    #    for j in range(len(training_set)):
-            #print("Filter pipeline " + str(i) + " with data " + str(j))
     i = 0
     for ppl in pipeline_list:
         print('\nTesting pipeline ' + str(i))
@@ -97,23 +93,8 @@ def detect_learning(training_set, training_label, spl, conv_net, training_metric
             pipeline_list_good.append(ppl)
             print("Pipeline selected, " + str(j) + " images working")
         i += 1
-            #cross_table[i][j] = 1
-
-        #if len(pipeline_list_good) >= len(training_set): break
 
     print(str(len(pipeline_list_good)) + " pipelines with a positive score")
-
-    # cross_table = [[0] * len(training_set)] * len(pipeline_list_good)
-
-    # for i in range(len(pipeline_list_good)):
-    #     for j in range(len(training_set)):
-    #         print("Filter pipeline " + str(i) + " with data " + str(j))
-    #         im_g = cv2.cvtColor(training_set[j], cv2.COLOR_BGR2GRAY)
-    #         im_g = cv2.rotate(im_g, cv2.ROTATE_180)
-    #         ppl.browse(im_g)
-    #         ppl.score(lbl)
-    #         if ppl.reward == 0:
-    #             cross_table[i][j] = 1
 
     #Training
     criterion = nn.CrossEntropyLoss()
@@ -131,16 +112,11 @@ def detect_learning(training_set, training_label, spl, conv_net, training_metric
                         im_p = im
                         im_s = cv2.resize(im_p, down_points, interpolation= cv2.INTER_LINEAR)
                         im_t = transforms.ToTensor()(im_s).to(torch.device("cuda:0" if torch.cuda.is_available() else "cpu"))
-                        #im_t = 2*im_t - 1
-
-                        if conv_net is None:
-                            brightness, contrast, sal, remarkability, sharpness, bluriness, maximum, minimum = training_metrics[j]
-                            c_im = torch.tensor([brightness, contrast, sal, remarkability, sharpness, bluriness, maximum, minimum], dtype=torch.float32)
-                        else:
-                            c_im = conv_net.forward(im_t)
+                        c_im = conv_net.forward(im_t)
 
                         output = spl.graph.nodes[alg]['QTable'].forward(c_im)
                         target = torch.clone(spl.graph.nodes[alg]['QTable'].last_prediction)
+
                         for k, t in enumerate(target): target[0][k] = 1 - ppl.reward
                         succ = spl.graph.successors(alg)
                         next_alg = iter_extract(ppl.graph.successors(alg), 0) 
@@ -153,56 +129,14 @@ def detect_learning(training_set, training_label, spl, conv_net, training_metric
                         loss.backward()
                         optimizer.step()
                         optimizer.zero_grad()
-                        epoch_loss += loss.item()
-        print("Epoch loss : " + str(epoch_loss))
+                        spl.graph.nodes[alg]['loss'].append(loss.item())
 
-
-    # criterion = nn.CrossEntropyLoss()
-    # for k in range(0, EPOCH):
-    #     loss_epoch = 0
-    #     print("Training epoch " + str(k))
-    #     for i in range(len(pipeline_list_good)):
-    #         for j in range(len(training_set)):
-    #             if cross_table[i][j] == 1:
-    #                 im_g = cv2.cvtColor(training_set[j], cv2.COLOR_BGR2GRAY)
-    #                 im_g = cv2.rotate(im_g, cv2.ROTATE_180)
-    #                 im = im_g
-    #                 for alg in pipeline_list_good[i].graph.nodes:
-    #                     if spl.graph.nodes[alg]['subset'] != SINK :
-    #                         exec(alg)
-    #                         im_p = im
-    #                         im_s = cv2.resize(im_p, down_points, interpolation= cv2.INTER_LINEAR)
-    #                         im_t = transforms.ToTensor()(im_s).to(torch.device("cuda:0" if torch.cuda.is_available() else "cpu"))
-
-    #                         if conv_net is None:
-    #                             brightness, contrast, sal, remarkability, sharpness, bluriness, maximum, minimum = training_metrics[j]
-    #                             c_im = torch.tensor([brightness, contrast, sal, remarkability, sharpness, bluriness, maximum, minimum], dtype=torch.float32)
-    #                         else:
-    #                             c_im = conv_net.forward(im_t)
-
-    #                         output = spl.graph.nodes[alg]['QTable'].forward(c_im)
-    #                         target = torch.clone(spl.graph.nodes[alg]['QTable'].last_prediction)
-    #                         for k, t in enumerate(target): target[:][k] = 1 - pipeline_list_good[i].reward
-    #                         succ = spl.graph.successors(alg)
-    #                         next_alg = iter_extract(pipeline_list_good[i].graph.successors(alg), 0) 
-    #                         oidx = indx_extract(succ, next_alg)
-    #                         target[0][oidx] = pipeline_list_good[i].reward
-
-    #                         parameters = list(conv_net.parameters()) + list(spl.graph.nodes[alg]['QTable'].parameters())
-    #                         optimizer = optim.SGD(parameters, lr=0.1, momentum=0.9)
-    #                         loss = criterion(output, target)
-    #                         loss.backward()
-    #                         loss_epoch += loss.item()
-    #                         optimizer.step()
-    #                         optimizer.zero_grad()
-    #     print("Epoch loss : " + str(loss_epoch))
-
-                            # for k, t in enumerate(target):
-                            #     target[:][k] = 1 - reward
-                            # if spl.graph.nodes[alg]['learner'].choosen_idx >= 0 and spl.graph.nodes[alg]['learner'].choosen_idx < len(target):
-                            #     target[:][spl.graph.nodes[alg]['learner'].choosen_idx] = reward
-                            # else:
-                            #     idx = torch.argmin(target)
-                            #     target[:][idx] = reward
-
-                            # spl.graph.nodes[alg]['learner'].train(spl.graph.nodes[alg]['QTable'].last_prediction, target)
+    f_save = open("results_detect/loss.csv", "w")
+    for alg in spl.graph.nodes:
+        f_save.write(spl.graph.nodes[alg]['name'])
+        f_save.write(";")
+        for l in spl.graph.nodes[alg]['loss']:
+            f_save.write(str(l))
+            f_save.write(";")
+        f_save.write("\n")
+    f_save.close()
