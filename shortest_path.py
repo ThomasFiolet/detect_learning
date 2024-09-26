@@ -20,40 +20,47 @@ from utils import iter_extract
 from utils import indx_extract
 
 #---START PROCESSING---#
-WIN_W = 500
-WIN_H = 500
-app = App(WIN_W, WIN_H)
-app.background(255)
+#WIN_W = 500
+#WIN_H = 500
+#app = App(WIN_W, WIN_H)
+#app.background(255)
 
-N_st_per_node = 4
-dataset_size = 200
+EPOCH = 30
+
+activation = 'logsigmoid'
+
+map = Map('maps/europe/uncomplete/cities', 'maps/europe/uncomplete/distances')
+
+n_cities = map.graph.number_of_nodes()
+print('Number of cities in map : ' + str(n_cities))
+dataset_size = int(n_cities*(n_cities - 1)/2)
+print('Number of path possible : ' + str(dataset_size))
 training_size = 60
-testing_size = 140
-EPOCH = 24
+testing_size = dataset_size - training_size
 
-map = Map('maps/europe/cities', 'maps/europe/distances')
+# edges_list = map.graph.edges
+# edges_list = np.array(edges_list)
+# N_edges_to_remove = int(0.75*len(edges_list))
 
-edges_list = map.graph.edges
-edges_list = np.array(edges_list)
-N_edges_to_remove = int(0.75*len(edges_list))
+# r = list(range(0, len(edges_list)))
+# random.shuffle(r)  
 
-r = list(range(0, len(edges_list)))
-random.shuffle(r)  
+# edges_list_random = []
 
-edges_list_random = []
+# for k in r:
+#     edges_list_random.append(edges_list[k])
 
-for k in r:
-    edges_list_random.append(edges_list[k])
-
-for e, i in zip(edges_list_random, range(len(edges_list_random))):
-    if i > N_edges_to_remove: break
-    map.graph.remove_edge(*e)
+# for e, i in zip(edges_list_random, range(len(edges_list_random))):
+#     if i > N_edges_to_remove: break
+#     map.graph.remove_edge(*e)
 
 railroads_dijkstra = []
+time_dijkstra = []
 railroads_astar = []
+time_astar = []
 
-map.set_pos(WIN_W, WIN_H)
-map.draw(app)
+#map.set_pos(WIN_W, WIN_H)
+#map.draw(app)
 
 while len(railroads_dijkstra) < dataset_size:
     departure = ''; arrival = ''
@@ -62,8 +69,15 @@ while len(railroads_dijkstra) < dataset_size:
         departure = random.choice(list(map.graph))
         arrival = random.choice(list(map.graph))
 
+    start = time.time()
     path_dijkstra = nx.shortest_path(map.graph, source=departure, target = arrival, weight = 'weight')
+    end = time.time()
+    optimal_time = end - start
+
+    start = time.time()
     path_astar = nx.astar_path(map.graph, source=departure, target = arrival, weight = 'weight', heuristic = None) #Determinist, no need for heuristic
+    end = time.time()
+    heurist_time = end - start
 
     rl = Railroad()
     for town in path_dijkstra:
@@ -73,7 +87,9 @@ while len(railroads_dijkstra) < dataset_size:
         else:
             rl.graph.add_node(map.current_node)
         rl.last_node = map.current_node
-    if rl not in railroads_dijkstra: railroads_dijkstra.append(rl)
+    if rl not in railroads_dijkstra: 
+        railroads_dijkstra.append(rl)
+        time_dijkstra.append(optimal_time)
 
     rl = Railroad()
     for town in path_astar:
@@ -83,7 +99,9 @@ while len(railroads_dijkstra) < dataset_size:
         else:
             rl.graph.add_node(map.current_node)
         rl.last_node = map.current_node
-    if rl not in railroads_astar: railroads_astar.append(rl)
+    if rl not in railroads_astar: 
+        railroads_astar.append(rl)
+        time_astar.append(heurist_time)
 
 criterion = nn.CrossEntropyLoss()
 
@@ -121,7 +139,7 @@ for k in range(0, EPOCH):
     for city in map.graph.nodes:
         map.graph.nodes[city]['loss'].append(map.graph.nodes[city]['c_loss']/map.graph.nodes[city]['i_loss'])
 
-f_save = open("results_shortest/loss.csv", "w")
+f_save = open("results_shortest/" + activation + "/loss.csv", "w")
 for city in map.graph.nodes:
     f_save.write(map.graph.nodes[city]['name'])
     f_save.write(";")
@@ -131,10 +149,28 @@ for city in map.graph.nodes:
     f_save.write("\n")
 f_save.close()
 
-f_save = open("results_shortest/distance.csv", "w")
-for railroad_d, railroad_a in itertools.islice(zip(railroads_dijkstra, railroads_astar), training_size, training_size + testing_size):
+f_save = open("results_shortest/" + activation + "/distance.csv", "w")
+f_save.write("Path")
+f_save.write(";")
+f_save.write("Dijkstra")
+f_save.write(";")
+f_save.write("A Star")
+f_save.write(";")
+f_save.write("Ours")
+f_save.write(";")
+f_save.write("Dijkstra")
+f_save.write(";")
+f_save.write("A Star")
+f_save.write(";")
+f_save.write("Ours")
+f_save.write(";")
+f_save.write("\n")
+
+for railroad_d, railroad_a, time_d, time_a in itertools.islice(zip(railroads_dijkstra, railroads_astar, time_dijkstra, time_astar), training_size, training_size + testing_size):
     optimal_distance = railroad_d.graph.size(weight="weight")
+    optimal_time = time_d
     heurist_distance = railroad_a.graph.size(weight="weight")
+    heurist_time = time_a
 
     departure = list(railroad_d.graph)[0]
     arrival = list(railroad_d.graph)[-1]
@@ -142,7 +178,10 @@ for railroad_d, railroad_a in itertools.islice(zip(railroads_dijkstra, railroads
     map.current_node = departure    
     current_distance = 0
     print('------------')
-    print('Departure : ' + departure + ', arrival : ' + arrival)  
+    print('Departure : ' + departure + ', arrival : ' + arrival)
+
+    start = time.time()
+
     while map.current_node != arrival:
 
         iidx = list(map.graph).index(arrival)
@@ -162,11 +201,17 @@ for railroad_d, railroad_a in itertools.islice(zip(railroads_dijkstra, railroads
             current_distance = 0
             break
 
-    if current_distance < map.graph.size(weight="weight"):
+    if current_distance < map.graph.size(weight="weight") and current_distance > 0 :
         #for city in railroad.graph: print(city)
         print('Optimal distance : ' + str(optimal_distance))
         print('Heurist distance : ' + str(heurist_distance))
         print('Current distance : ' + str(current_distance))
+
+    end = time.time()
+    exec_time = end - start
+    print('Optimal time : ' + str(time_d))
+    print('Heurist time : ' + str(time_a))
+    print('Current time : ' + str(exec_time))
 
     f_save.write(departure)
     f_save.write("-")
@@ -178,6 +223,12 @@ for railroad_d, railroad_a in itertools.islice(zip(railroads_dijkstra, railroads
     f_save.write(str(heurist_distance))
     f_save.write(";")
     f_save.write(str(current_distance))
+    f_save.write(";")
+    f_save.write(str(time_d))
+    f_save.write(";")
+    f_save.write(str(time_a))
+    f_save.write(";")
+    f_save.write(str(exec_time))
     f_save.write(";")
 
     f_save.write("\n")
