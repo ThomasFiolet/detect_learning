@@ -63,24 +63,41 @@ from utils import conditionnal
 # plaintext = plaintext.replace(',', ' ')
 # print(plaintext)
 
-def heuristic(map, source, target):
-    try : return map.graph.edges[source, target]['weight']
-    except : return float('inf')
+# def heuristic(map, source, target):
+#     try : return map.graph.edges[source, target]['weight']
+#     except : return float('inf')
 
-n = random.randint(5,30)
-p = random.random()
-#G = nx.fast_gnp_random_graph(n, p, directed=True)
-G = nx.circular_ladder_graph(15)
-for (u,v,w) in G.edges(data=True):
-    #w['weight'] = random.randint(0,5000)
-    w['weight'] = 1
+# n = random.randint(5,30)
+# p = random.random()
+# #G = nx.fast_gnp_random_graph(n, p, directed=True)
+# G = nx.circular_ladder_graph(15)
+# for (u,v,w) in G.edges(data=True):
+#     #w['weight'] = random.randint(0,5000)
+#     w['weight'] = 1
 
-#source = random.choice(list(G))
-#target = random.choice(list(G))
+# #source = random.choice(list(G))
+# #target = random.choice(list(G))
 
-source = 1
-target = 7
+# source = 1
+# target = 7
 
-for i in range(30):
-    path = nx.astar_path(G, source=source, target=target, heuristic=None, weight='weight')
-    print(path)
+# for i in range(30):
+#     path = nx.astar_path(G, source=source, target=target, heuristic=None, weight='weight')
+#     print(path)
+
+import random
+import itertools
+
+# Supposons que tu as deux listes de même taille
+list1 = [1, 2, 3, 4, 5]
+list2 = ['a', 'b', 'c', 'd', 'e']
+
+# On génère tous les couples (produit cartésien des deux listes)
+couples = list(itertools.product(list1, list2))
+
+# On mélange ces couples aléatoirement
+random.shuffle(couples)
+
+# Itération sur les couples dans un ordre aléatoire
+for couple in couples:
+    print(couple)

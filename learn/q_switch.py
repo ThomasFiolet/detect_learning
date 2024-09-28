@@ -6,7 +6,7 @@ torch.autograd.set_detect_anomaly(True)
 
 torch.set_default_device('cuda')
 
-activation_function = nn.LogSigmoid()
+activation_function = nn.ELU()
 
 class QSwitch(nn.Module):
 

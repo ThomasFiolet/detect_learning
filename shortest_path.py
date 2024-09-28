@@ -1,4 +1,6 @@
 import random
+from random import shuffle
+from random import choice
 import time
 random.seed(time.time())
 from random import shuffle
@@ -27,7 +29,7 @@ from utils import indx_extract
 
 EPOCH = 30
 
-activation = 'logsigmoid'
+activation = 'elu'
 
 map = Map('maps/europe/uncomplete/cities', 'maps/europe/uncomplete/distances')
 
@@ -35,7 +37,7 @@ n_cities = map.graph.number_of_nodes()
 print('Number of cities in map : ' + str(n_cities))
 dataset_size = int(n_cities*(n_cities - 1)/2)
 print('Number of path possible : ' + str(dataset_size))
-training_size = 60
+training_size = 50
 testing_size = dataset_size - training_size
 
 # edges_list = map.graph.edges
@@ -62,44 +64,51 @@ time_astar = []
 #map.set_pos(WIN_W, WIN_H)
 #map.draw(app)
 
-while len(railroads_dijkstra) < dataset_size:
-    departure = ''; arrival = ''
+# rnd_node_d = list(map.graph)
+# shuffle(rnd_node_d)
+# print(rnd_node_d)
+# rnd_node_a = list(map.graph)
+# shuffle(rnd_node_a)
+# print(rnd_node_a)
 
-    while departure == arrival:
-        departure = random.choice(list(map.graph))
-        arrival = random.choice(list(map.graph))
+# for departure in rnd_node_d:
+#     for arrival in rnd_node_a:
 
-    start = time.time()
-    path_dijkstra = nx.shortest_path(map.graph, source=departure, target = arrival, weight = 'weight')
-    end = time.time()
-    optimal_time = end - start
+couples = list(itertools.product(list(map.graph), list(map.graph)))
+random.shuffle(couples)
 
-    start = time.time()
-    path_astar = nx.astar_path(map.graph, source=departure, target = arrival, weight = 'weight', heuristic = None) #Determinist, no need for heuristic
-    end = time.time()
-    heurist_time = end - start
+for (departure, arrival) in couples:
+    if departure != arrival:
 
-    rl = Railroad()
-    for town in path_dijkstra:
-        map.current_node = town
-        if rl.last_node != '':
-            rl.append(map.current_node, map.graph[rl.last_node][map.current_node]['weight'])
-        else:
-            rl.graph.add_node(map.current_node)
-        rl.last_node = map.current_node
-    if rl not in railroads_dijkstra: 
+        start = time.time()
+        path_dijkstra = nx.shortest_path(map.graph, source=departure, target = arrival, weight = 'weight')
+        end = time.time()
+        optimal_time = end - start
+
+        start = time.time()
+        path_astar = nx.astar_path(map.graph, source=departure, target = arrival, weight = 'weight', heuristic = None) #Determinist, no need for heuristic
+        end = time.time()
+        heurist_time = end - start
+
+        rl = Railroad()
+        for town in path_dijkstra:
+            map.current_node = town
+            if rl.last_node != '':
+                rl.append(map.current_node, map.graph[rl.last_node][map.current_node]['weight'])
+            else:
+                rl.graph.add_node(map.current_node)
+            rl.last_node = map.current_node
         railroads_dijkstra.append(rl)
         time_dijkstra.append(optimal_time)
 
-    rl = Railroad()
-    for town in path_astar:
-        map.current_node = town
-        if rl.last_node != '':
-            rl.append(map.current_node, map.graph[rl.last_node][map.current_node]['weight'])
-        else:
-            rl.graph.add_node(map.current_node)
-        rl.last_node = map.current_node
-    if rl not in railroads_astar: 
+        rl = Railroad()
+        for town in path_astar:
+            map.current_node = town
+            if rl.last_node != '':
+                rl.append(map.current_node, map.graph[rl.last_node][map.current_node]['weight'])
+            else:
+                rl.graph.add_node(map.current_node)
+            rl.last_node = map.current_node
         railroads_astar.append(rl)
         time_astar.append(heurist_time)
 
@@ -119,6 +128,7 @@ for k in range(0, EPOCH):
         input[iidx] = 1 #Indicates the last city to reach to the neural net
         for city in railroad.graph:
             if city is list(railroad.graph)[-1] : break
+            #print(city)
             output = map.graph.nodes[city]['QTable'].forward(input)
             target = torch.zeros(output.size(), device="cuda")
             next_city = iter_extract(railroad.graph.successors(city), 0) 
@@ -137,7 +147,10 @@ for k in range(0, EPOCH):
             map.graph.nodes[city]['i_loss'] += 1
 
     for city in map.graph.nodes:
-        map.graph.nodes[city]['loss'].append(map.graph.nodes[city]['c_loss']/map.graph.nodes[city]['i_loss'])
+       if map.graph.nodes[city]['i_loss'] > 0:
+            map.graph.nodes[city]['loss'].append(map.graph.nodes[city]['c_loss']/map.graph.nodes[city]['i_loss'])
+
+    #print("-------------------------")
 
 f_save = open("results_shortest/" + activation + "/loss.csv", "w")
 for city in map.graph.nodes:
