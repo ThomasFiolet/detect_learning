@@ -6,11 +6,9 @@ torch.autograd.set_detect_anomaly(True)
 
 torch.set_default_device('cuda')
 
-activation_function = nn.ELU()
-
 class QSwitch(nn.Module):
 
-    def __init__(self, n_inputs, n_outputs, isConvNet):
+    def __init__(self, n_inputs, n_outputs, activation_function):
         super(QSwitch, self).__init__()
         torch.cuda.manual_seed_all(time.time())
 

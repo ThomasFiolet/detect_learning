@@ -21,9 +21,17 @@ from graph import Railroad
 from utils import iter_extract
 from utils import indx_extract
 
-EPOCH = 30
+EPOCH = 35
 
-def Shortest(Map, activation):
+def Shortest(map, activation, criterion, criterion_function):
+
+    n_cities = map.graph.number_of_nodes()
+    print('Number of cities in map : ' + str(n_cities))
+    dataset_size = int(n_cities*(n_cities - 1)/2)
+    print('Number of path possible : ' + str(dataset_size))
+    training_size = 150
+    testing_size = dataset_size - training_size
+
     railroads_dijkstra = []
     time_dijkstra = []
     railroads_astar = []
@@ -67,8 +75,6 @@ def Shortest(Map, activation):
             railroads_astar.append(rl)
             time_astar.append(heurist_time)
 
-    criterion = nn.CrossEntropyLoss()
-
     for k in range(0, EPOCH): 
 
         for city in map.graph.nodes:
@@ -86,14 +92,14 @@ def Shortest(Map, activation):
                 #print(city)
                 output = map.graph.nodes[city]['QTable'].forward(input)
                 target = torch.zeros(output.size(), device="cuda")
-                next_city = iter_extract(railroad.graph.successors(city), 0) 
+                next_city = iter_extract(railroad.graph.successors(city), 0)
                 succ = map.graph.successors(city)
                 oidx = indx_extract(succ, next_city)
                 target[oidx] = 1
 
                 parameters = map.graph.nodes[city]['QTable'].parameters()
                 optimizer = optim.SGD(parameters, lr=0.1, momentum=0.9)
-                loss = criterion(output, target)
+                loss = criterion_function(output, target)
                 loss.backward()
                 optimizer.step()
                 optimizer.zero_grad()
@@ -105,7 +111,7 @@ def Shortest(Map, activation):
             if map.graph.nodes[city]['i_loss'] > 0:
                     map.graph.nodes[city]['loss'].append(map.graph.nodes[city]['c_loss']/map.graph.nodes[city]['i_loss'])
 
-    f_save = open("results_shortest/" + activation + "/loss.csv", "w")
+    f_save = open("results_shortest/" + "/loss_" + activation + "_" + criterion + ".csv", "w")
     for city in map.graph.nodes:
         f_save.write(map.graph.nodes[city]['name'])
         f_save.write(";")
@@ -115,7 +121,7 @@ def Shortest(Map, activation):
         f_save.write("\n")
     f_save.close()
 
-    f_save = open("results_shortest/" + activation + "/distance.csv", "w")
+    f_save = open("results_shortest/" + "/results_" + activation + "_" + criterion + ".csv", "w")
     f_save.write("Path")
     f_save.write(";")
     f_save.write("Dijkstra")
@@ -132,7 +138,7 @@ def Shortest(Map, activation):
     f_save.write(";")
     f_save.write("\n")
 
-    for railroad_d, railroad_a, time_d, time_a in itertools.islice(zip(railroads_dijkstra, railroads_astar, time_dijkstra, time_astar), training_size, training_size + testing_size):
+    for railroad_d, railroad_a, time_d, time_a in itertools.islice(zip(railroads_dijkstra, railroads_astar, time_dijkstra, time_astar), training_size, dataset_size):
         optimal_distance = railroad_d.graph.size(weight="weight")
         optimal_time = time_d
         heurist_distance = railroad_a.graph.size(weight="weight")
@@ -198,5 +204,4 @@ def Shortest(Map, activation):
         f_save.write(";")
 
         f_save.write("\n")
-
     f_save.close()

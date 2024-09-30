@@ -14,7 +14,7 @@ from graph import Railroad
 map = Map('maps/europe/raw/cities', 'maps/europe/raw/distances')
 edges_list = map.graph.edges
 edges_list = np.array(edges_list)
-N_edges_to_remove = int(0.60*len(edges_list))
+N_edges_to_remove = int(0.5*len(edges_list))
 
 r = list(range(0, len(edges_list)))
 random.shuffle(r)  

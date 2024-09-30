@@ -172,7 +172,7 @@ class Sample:
         nx.set_node_attributes(self.graph, pos_norm, 'pos')
 
 class Map:
-    def __init__(self, cities_file, adjacency_file):
+    def __init__(self, cities_file, adjacency_file, activation_function):
 
         self.current_node = ""
 
@@ -202,7 +202,7 @@ class Map:
             n_inputs = self.graph.number_of_nodes()
             n_outputs = sum(1 for _ in self.graph.successors(node))
             if n_outputs != 0:
-                self.graph.nodes[node]['QTable'] = QSwitch(n_inputs, n_outputs, False)
+                self.graph.nodes[node]['QTable'] = QSwitch(n_inputs, n_outputs, activation_function)
                 self.graph.nodes[node]['learner'] = Learner(None, self.graph.nodes[node]['QTable'].parameters())
 
     def find_output_idx(self, output):
