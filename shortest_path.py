@@ -43,19 +43,17 @@ criterion_function = nn.CrossEntropyLoss()
 
 # criterion_function_list = [nn.L1Loss, nn.MSELoss, nn.CrossEntropyLoss, nn.CTCLoss, nn.NLLLoss, nn.PoissonNLLLoss, nn.GaussianNLLLoss, nn.KLDivLoss, nn.BCELoss, nn.BCEWithLogitsLoss, nn.MarginRankingLoss, nn.HingeEmbeddingLoss, nn.MultiLabelMarginLoss, nn.HuberLoss, nn.SmoothL1Loss, nn.SoftMarginLoss, nn.MultiLabelSoftMarginLoss, nn.CosineEmbeddingLoss, nn.MultiMarginLoss, nn.TripletMarginLoss, nn.TripletMarginWithDistanceLoss]
 
-activation_list = ['elu', 'hardshrink', 'hardsigmoid', 'hardtanh', 'hardswish', 'leakyrelu', 'logsigmoid', 'prelu', 'relu', 'relu6', 'rrelu', 'selu', 'celu', 'gelu', 'sigmoid', 'silu', 'mish', 'softplus', 'softshrink', 'softsign', 'tanh', 'tanhshrink']
-
-criterion_list = ['l1', 'mse', 'crossentropy', 'bcewithlogits', 'hingeembedding', 'huber', 'smoothl1', 'softmargin']
+#activation_list = ['elu', 'hardshrink', 'hardsigmoid', 'hardtanh', 'hardswish', 'leakyrelu', 'logsigmoid', 'relu', 'relu6', 'rrelu', 'selu', 'celu', 'gelu', 'sigmoid', 'silu', 'mish', 'softplus', 'softshrink', 'softsign', 'tanh', 'tanhshrink']
 
 #Restart at : leakyrelu hingeembedding
 
-#criterion_list = ['l1']
+#activation_function_list = [nn.ELU, nn.Hardshrink, nn.Hardsigmoid, nn.Hardtanh, nn.Hardswish, nn.LeakyReLU, nn.LogSigmoid, nn.ReLU, nn.ReLU6, nn.RReLU, nn.SELU, nn.CELU, nn.GELU, nn.Sigmoid, nn.SiLU, nn.Mish, nn.Softplus, nn.Softshrink, nn.Softsign, nn.Tanh, nn.Tanhshrink]
 
-activation_function_list = [nn.ELU, nn.Hardshrink, nn.Hardsigmoid, nn.Hardtanh, nn.Hardswish, nn.LeakyReLU, nn.LogSigmoid, nn.PReLU, nn.ReLU, nn.ReLU6, nn.RReLU, nn.SELU, nn.CELU, nn.GELU, nn.Sigmoid, nn.SiLU, nn.Mish, nn.Softplus, nn.Softshrink, nn.Softsign, nn.Tanh, nn.Tanhshrink]
+activation_function_list = [nn.ReLU, nn.ReLU6, nn.RReLU, nn.SELU, nn.CELU, nn.GELU, nn.Sigmoid, nn.SiLU, nn.Mish, nn.Softplus, nn.Softshrink, nn.Softsign, nn.Tanh, nn.Tanhshrink]
+activation_list = ['relu', 'relu6', 'rrelu', 'selu', 'celu', 'gelu', 'sigmoid', 'silu', 'mish', 'softplus', 'softshrink', 'softsign', 'tanh', 'tanhshrink']
 
 criterion_function_list = [nn.L1Loss, nn.MSELoss, nn.CrossEntropyLoss, nn.BCEWithLogitsLoss, nn.HingeEmbeddingLoss, nn.HuberLoss, nn.SmoothL1Loss, nn.SoftMarginLoss]
-
-#criterion_function_list = [nn.L1Loss]
+criterion_list = ['l1', 'mse', 'crossentropy', 'bcewithlogits', 'hingeembedding', 'huber', 'smoothl1', 'softmargin']
 
 
 for activation, activation_function in zip(activation_list, activation_function_list):
