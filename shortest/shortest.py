@@ -21,7 +21,10 @@ from graph import Railroad
 from utils import iter_extract
 from utils import indx_extract
 
-EPOCH = 35
+#europe : 35
+#large_100 : 15
+#large_1000 : 15
+EPOCH = 1
 
 def Shortest(map, activation, criterion, criterion_function):
 
@@ -29,8 +32,17 @@ def Shortest(map, activation, criterion, criterion_function):
     print('Number of cities in map : ' + str(n_cities))
     dataset_size = int(n_cities*(n_cities - 1)/2)
     print('Number of path possible : ' + str(dataset_size))
-    training_size = 150
-    testing_size = dataset_size - training_size
+    #europe : 150 approx. 75%
+    #large_100 = 495 approx. 10%
+    #large_1000 = 5000 approx. 1%
+    #training_size = 495
+    training_size = 10
+
+    #europe
+    #testing_size = dataset_size - training_size
+
+    #large_100
+    testing_size = 10
 
     railroads_dijkstra = []
     time_dijkstra = []
@@ -40,9 +52,10 @@ def Shortest(map, activation, criterion, criterion_function):
     couples = list(itertools.product(list(map.graph), list(map.graph)))
     random.shuffle(couples)
 
-    for (departure, arrival) in couples:
+    for (departure, arrival) in itertools.islice(couples, 0, training_size + testing_size):
         if departure != arrival:
 
+            print(str(departure) + " " + str(arrival))
             start = time.time()
             path_dijkstra = nx.shortest_path(map.graph, source=departure, target = arrival, weight = 'weight')
             end = time.time()
@@ -76,6 +89,7 @@ def Shortest(map, activation, criterion, criterion_function):
             time_astar.append(heurist_time)
 
     for k in range(0, EPOCH): 
+        print("EPOCH " + str(k))
 
         for city in map.graph.nodes:
             map.graph.nodes[city]['c_loss'] = 0
@@ -111,7 +125,7 @@ def Shortest(map, activation, criterion, criterion_function):
             if map.graph.nodes[city]['i_loss'] > 0:
                     map.graph.nodes[city]['loss'].append(map.graph.nodes[city]['c_loss']/map.graph.nodes[city]['i_loss'])
 
-    f_save = open("results_shortest/" + "/loss_" + activation + "_" + criterion + ".csv", "w")
+    f_save = open("results_shortest_large/large_1000/" + "/loss_" + activation + "_" + criterion + ".csv", "w")
     for city in map.graph.nodes:
         f_save.write(map.graph.nodes[city]['name'])
         f_save.write(";")
@@ -121,7 +135,7 @@ def Shortest(map, activation, criterion, criterion_function):
         f_save.write("\n")
     f_save.close()
 
-    f_save = open("results_shortest/" + "/results_" + activation + "_" + criterion + ".csv", "w")
+    f_save = open("results_shortest_large/large_1000/" + "/results_" + activation + "_" + criterion + ".csv", "w")
     f_save.write("Path")
     f_save.write(";")
     f_save.write("Dijkstra")
@@ -138,7 +152,7 @@ def Shortest(map, activation, criterion, criterion_function):
     f_save.write(";")
     f_save.write("\n")
 
-    for railroad_d, railroad_a, time_d, time_a in itertools.islice(zip(railroads_dijkstra, railroads_astar, time_dijkstra, time_astar), training_size, dataset_size):
+    for railroad_d, railroad_a, time_d, time_a in itertools.islice(zip(railroads_dijkstra, railroads_astar, time_dijkstra, time_astar), training_size, training_size + testing_size):
         optimal_distance = railroad_d.graph.size(weight="weight")
         optimal_time = time_d
         heurist_distance = railroad_a.graph.size(weight="weight")
@@ -166,14 +180,20 @@ def Shortest(map, activation, criterion, criterion_function):
             next_city = iter_extract(succ, oidx)
             current_distance += map.graph[map.current_node][next_city]['weight']
             map.current_node = next_city
-            if current_distance > map.graph.size(weight="weight"):
+            #europe
+            #if current_distance > map.graph.size(weight="weight"):
+            #large_100 large_1000
+            if time.time() - start > 1.0:
                 print('Optimal distance : ' + str(optimal_distance))
                 print('Heurist distance : ' + str(heurist_distance))
                 print('No solution found...')
                 current_distance = 0
                 break
 
-        if current_distance < map.graph.size(weight="weight") and current_distance > 0 :
+        #europe
+        #if current_distance < map.graph.size(weight="weight") and current_distance > 0 :
+        #large_100 large_1000
+        if time.time() - start < 1.0 and current_distance > 0 :
             #for city in railroad.graph: print(city)
             print('Optimal distance : ' + str(optimal_distance))
             print('Heurist distance : ' + str(heurist_distance))

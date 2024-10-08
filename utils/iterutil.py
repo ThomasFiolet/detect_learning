@@ -1,6 +1,7 @@
 def iter_extract(iterator, idx):
     for i, v in enumerate(iterator):
-        if i is idx : return v
+        #Need or for strings and int
+        if i is idx or i == idx : return v
 
 def indx_extract(iterator, el):
     for i, v in enumerate(iterator):
