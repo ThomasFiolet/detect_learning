@@ -1,6 +1,15 @@
+
+#Libre Office
 .~lock.*#
 **/*Zone.Identifier
 
+#Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+#Specific Data
 data/colors/0001.jpg
 data/colors/0002.jpg
 data/colors/0003.jpg
