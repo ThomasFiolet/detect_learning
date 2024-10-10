@@ -46,6 +46,9 @@ class Sample:
             self.graph.nodes[node]['name'] = name
 
             self.graph.nodes[node]['loss'] = []
+            self.graph.nodes[node]['c_loss'] = 0
+            self.graph.nodes[node]['i_loss'] = 0
+            
             self.graph.nodes[node]['nuse'] = 0
 
             if name == "''.join": self.graph.nodes[node]['name'] = "tesserocr.image_to_text"

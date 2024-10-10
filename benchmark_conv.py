@@ -1,5 +1,7 @@
 from os import listdir
 from os.path import join, isfile
+import time
+random.seed(time.time())
 import random
 import math
 
@@ -32,7 +34,6 @@ from utils import conditionnal
 from metrics import reward
 from detect import detect_init
 from detect import detect_unsupervised
-from detect import detect_supervised
 from detect import detect_learning
 
 #---CONSTANT DEFINITION---#
@@ -44,6 +45,13 @@ COND = 4
 DETECT = 5
 
 METHOD = ['ZXING', 'TESSER', 'CVBD', 'ZBAR', 'COND', 'DETECT']
+
+times_ZXING = []
+times_TESSER = []
+times_CVBD = []
+times_ZBAR = []
+times_COND = []
+times_DETECT = []
 
 WIN_W = 800
 WIN_H = 480
@@ -73,33 +81,57 @@ for k in range(len(test_set)):
     print('Testing image ' + str(k) + ' : ' + str(test_label[k]))
 
     #ZXING
+    start = time.time()
     barre_code = zxing(im_g, zxingcpp.BarcodeFormat.EAN13)
     results[ZXING, k] = reward(barre_code, test_label[k])
+    end = time.time()
+    exec_time = end - start
+    times_ZXING.append(exec_time)
     print(barre_code)
 
     #TESSERACT
+    start = time.time()
     barre_code = tesser(im_g)
     results[TESSER, k] = reward(barre_code, test_label[k])
+    end = time.time()
+    exec_time = end - start
+    times_TESSER.append(exec_time)
     print(barre_code)
 
     #OPENCV
+    start = time.time()
     barre_code, decoded_info, decoded_type = cv_barcode_detector.detectAndDecode(im_g)
     results[CVBD, k] = reward(barre_code, test_label[k])
+    end = time.time()
+    exec_time = end - start
+    times_CVBD.append(exec_time)
     print(barre_code)
 
     #ZBAR
+    start = time.time()
     barre_code = zbar(im_g)
     results[ZBAR, k] = reward(barre_code, test_label[k])
+    end = time.time()
+    exec_time = end - start
+    times_ZBAR.append(exec_time)
     print(barre_code)
 
     #COND
+    start = time.time()
     barre_code = conditionnal(im_g)
     results[COND, k] = reward(barre_code, test_label[k])
+    end = time.time()
+    exec_time = end - start
+    times_COND.append(exec_time)
     print(barre_code)
 
     #DETECT
+    start = time.time()
     barre_code = detect_unsupervised(im_g, spl, conv_net)
     results[DETECT, k] = reward(barre_code, test_label[k])
+    end = time.time()
+    exec_time = end - start
+    times_DETECT.append(exec_time)
     print(barre_code)
 
 #---SAVING RESULTS---#
@@ -122,6 +154,16 @@ for alg in spl.graph.nodes:
 f_save.close()
 
 f_save = open("results_detect/heatmap.csv", "w")
+for i in (ZXING, TESSER, CVBD, ZBAR, COND, DETECT):
+    f_save.write(METHOD[i])
+    f_save.write(";")
+    for j in range(len(heatmap[i])):
+        f_save.write(str(heatmap[i][j]))
+        f_save.write(";")
+    f_save.write("\n")
+f_save.close()
+
+f_save = open("results_detect/times.csv", "w")
 for i in (ZXING, TESSER, CVBD, ZBAR, COND, DETECT):
     f_save.write(METHOD[i])
     f_save.write(";")

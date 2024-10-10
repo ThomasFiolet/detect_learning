@@ -46,7 +46,7 @@ down_points = (down_width, down_height)
 n_ppl = 50
 EPOCH = 15
 
-def detect_learning(training_set, training_label, spl, conv_net, training_metrics):
+def detect_learning(training_set, training_label, spl, conv_net):
 
     PIPE = 1
     SOURCE = 0
@@ -100,6 +100,11 @@ def detect_learning(training_set, training_label, spl, conv_net, training_metric
     criterion = nn.CrossEntropyLoss()
     for k in range(0, EPOCH):
         epoch_loss = 0
+
+        for node in spl.graph.nodes:
+            map.graph.nodes[node]['c_loss'] = 0
+            map.graph.nodes[node]['i_loss'] = 0
+
         print("Training epoch " + str(k))
         for ppl in pipeline_list_good:
             for im_b in ppl.working_im:
@@ -129,7 +134,13 @@ def detect_learning(training_set, training_label, spl, conv_net, training_metric
                         loss.backward()
                         optimizer.step()
                         optimizer.zero_grad()
-                        spl.graph.nodes[alg]['loss'].append(loss.item())
+                        #spl.graph.nodes[alg]['loss'].append(loss.item())
+                        spl.graph.nodes[alg]['c_loss'] += loss.item()
+                        spl.graph.nodes[alg]['i_loss'] += 1
+
+        for alg in spl.graph.nodes:
+            if spl.graph.nodes[alg]['i_loss'] > 0:
+                    spl.graph.nodes[alg]['loss'].append(spl.graph.nodes[alg]['c_loss']/spl.graph.nodes[alg]['i_loss'])
 
     f_save = open("results_detect/loss.csv", "w")
     for alg in spl.graph.nodes:
