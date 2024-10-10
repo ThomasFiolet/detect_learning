@@ -4,33 +4,35 @@ from random import choice
 import time
 random.seed(time.time())
 from random import shuffle
-import itertools
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import torch.optim as optim
 torch.set_default_device('cuda')
-from processing_py import *
 
 import networkx as nx
 import numpy as np
 
 from graph import Map
-from graph import Railroad
 from utils import iter_extract
 from utils import indx_extract
 from shortest import Shortest
-from utils import gen_dijsktra
+from utils import Gen_dijsktra
 
 #---------------------------------------------------
 #FILTERED
-activation_list = ['elu', 'hardshrink', 'hardsigmoid', 'hardtanh', 'hardswish', 'leakyrelu', 'logsigmoid', 'relu', 'relu6', 'rrelu', 'selu', 'celu', 'gelu', 'sigmoid', 'silu', 'mish', 'softplus', 'softshrink', 'softsign', 'tanh', 'tanhshrink']
-activation_function_list = [nn.ELU, nn.Hardshrink, nn.Hardsigmoid, nn.Hardtanh, nn.Hardswish, nn.LeakyReLU, nn.LogSigmoid, nn.ReLU, nn.ReLU6, nn.RReLU, nn.SELU, nn.CELU, nn.GELU, nn.Sigmoid, nn.SiLU, nn.Mish, nn.Softplus, nn.Softshrink, nn.Softsign, nn.Tanh, nn.Tanhshrink]
+# activation_list = ['elu', 'hardshrink', 'hardsigmoid', 'hardtanh', 'hardswish', 'leakyrelu', 'logsigmoid', 'relu', 'relu6', 'rrelu', 'selu', 'celu', 'gelu', 'sigmoid', 'silu', 'mish', 'softplus', 'softshrink', 'softsign', 'tanh', 'tanhshrink']
+# activation_function_list = [nn.ELU, nn.Hardshrink, nn.Hardsigmoid, nn.Hardtanh, nn.Hardswish, nn.LeakyReLU, nn.LogSigmoid, nn.ReLU, nn.ReLU6, nn.RReLU, nn.SELU, nn.CELU, nn.GELU, nn.Sigmoid, nn.SiLU, nn.Mish, nn.Softplus, nn.Softshrink, nn.Softsign, nn.Tanh, nn.Tanhshrink]
 
-criterion_function_list = [nn.L1Loss, nn.MSELoss, nn.CrossEntropyLoss, nn.BCEWithLogitsLoss, nn.HingeEmbeddingLoss, nn.HuberLoss, nn.SmoothL1Loss, nn.SoftMarginLoss]
-criterion_list = ['l1', 'mse', 'crossentropy', 'bcewithlogits', 'hingeembedding', 'huber', 'smoothl1', 'softmargin']
+# criterion_function_list = [nn.L1Loss, nn.MSELoss, nn.CrossEntropyLoss, nn.BCEWithLogitsLoss, nn.HingeEmbeddingLoss, nn.HuberLoss, nn.SmoothL1Loss, nn.SoftMarginLoss]
+# criterion_list = ['l1', 'mse', 'crossentropy', 'bcewithlogits', 'hingeembedding', 'huber', 'smoothl1', 'softmargin']
 #---------------------------------------------------
+
+activation_list = ['elu']
+activation_function_list = [nn.ELU]
+
+criterion_function_list = [nn.L1Loss]
+criterion_list = ['l1']
 
 #Negative Loss with logsimoid hingeembedding
 map = Map('maps/europe/uncomplete/cities', 'maps/europe/uncomplete/distances', [])
@@ -52,11 +54,11 @@ testing_size = dataset_size - training_size
 #testing_size = 200
 
 map = Map('maps/europe/uncomplete/cities', 'maps/europe/uncomplete/distances', [])
-railroads_dijkstra, time_dijkstra, railroads_astar, time_astar = gen_dijsktra(map, training_size, testing_size)
+railroads_dijkstra, time_dijkstra, railroads_astar, time_astar = Gen_dijsktra(map, training_size, testing_size)
 
 for activation, activation_function in zip(activation_list, activation_function_list):
     for criterion, criterion_function in zip(criterion_list, criterion_function_list):
-        if activation != 'logsigmoid' and criterion != 'hingeembedding' :
+        if activation != 'logsigmoid' or criterion != 'hingeembedding' :
             print(activation + ' ' + criterion)
             map = Map('maps/europe/uncomplete/cities', 'maps/europe/uncomplete/distances', activation_function())
-            Shortest(map, activation, criterion, criterion_function())
+            Shortest(map, activation, criterion, criterion_function(), training_size, testing_size, railroads_dijkstra, time_dijkstra, railroads_astar, time_astar)

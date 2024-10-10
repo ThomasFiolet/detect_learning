@@ -6,20 +6,11 @@ random.seed(time.time())
 from random import shuffle
 import itertools
 
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-import torch.optim as optim
-torch.set_default_device('cuda')
-from processing_py import *
-
 import networkx as nx
 import numpy as np
 
 from graph import Map
 from graph import Railroad
-from utils import iter_extract
-from utils import indx_extract
 
 def Gen_dijsktra(map, training_size, testing_size) :
 
