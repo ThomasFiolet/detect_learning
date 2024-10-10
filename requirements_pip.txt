@@ -1,4 +1,4 @@
-args==0.1.0
+args
 asttokens
 attrs
 backcall
@@ -49,7 +49,7 @@ nest-asyncio
 networkx
 numexpr
 numpy==1.26.4 
-opencv-python
+#opencv-python
 packaging
 pandas==2.1.1 
 parso
@@ -90,9 +90,6 @@ tenacity
 #tesserocr==2.7.1
 toml
 tomli
-#torch==2.1.2
-torchaudio==2.1.2
-torchvision==0.16.2
 tornado
 tqdm
 traitlets

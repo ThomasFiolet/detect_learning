@@ -1,0 +1,4 @@
+simonflueckiger::tesserocr
+sympy
+idna
+typing_extensions
