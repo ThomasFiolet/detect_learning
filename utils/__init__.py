@@ -10,3 +10,4 @@ from .organizer import read_join_dataset
 from .organizer import read_functions
 from .organizer import sort_training_test
 from .organizer import sort_no_training
+from .gen_dijsktra import Gen_dijsktra

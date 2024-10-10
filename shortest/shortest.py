@@ -26,23 +26,7 @@ from utils import indx_extract
 #large_1000 : 15
 EPOCH = 15
 
-def Shortest(map, activation, criterion, criterion_function):
-
-    n_cities = map.graph.number_of_nodes()
-    print('Number of cities in map : ' + str(n_cities))
-    dataset_size = int(n_cities*(n_cities - 1)/2)
-    print('Number of path possible : ' + str(dataset_size))
-    #europe : 150 approx. 75%
-    #large_100 = 495 approx. 10%
-    #large_1000 = 9990 approx. 2%
-    #training_size = 495
-    training_size = 9990
-
-    #europe
-    #testing_size = dataset_size - training_size
-
-    #large_100
-    testing_size = 200
+def Shortest(map, activation, criterion, criterion_function, training_size, testing_size):
 
     railroads_dijkstra = []
     time_dijkstra = []
@@ -58,7 +42,6 @@ def Shortest(map, activation, criterion, criterion_function):
         if departure != arrival:
             if i%100 == 0:
                 print(str(i) + "th iteration")
-            #print(str(departure) + " " + str(arrival))
             start = time.time()
             path_dijkstra = nx.shortest_path(map.graph, source=departure, target = arrival, weight = 'weight')
             end = time.time()
