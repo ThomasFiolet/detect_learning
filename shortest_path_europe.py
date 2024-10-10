@@ -17,7 +17,7 @@ from graph import Map
 from utils import iter_extract
 from utils import indx_extract
 from shortest import Shortest
-from utils import Gen_dijsktra
+from shortest import Gen_dijsktra
 
 #---------------------------------------------------
 #FILTERED
