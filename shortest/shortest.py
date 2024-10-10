@@ -24,7 +24,7 @@ from utils import indx_extract
 #europe : 35
 #large_100 : 15
 #large_1000 : 15
-EPOCH = 1
+EPOCH = 15
 
 def Shortest(map, activation, criterion, criterion_function):
 
@@ -34,15 +34,15 @@ def Shortest(map, activation, criterion, criterion_function):
     print('Number of path possible : ' + str(dataset_size))
     #europe : 150 approx. 75%
     #large_100 = 495 approx. 10%
-    #large_1000 = 5000 approx. 1%
+    #large_1000 = 9990 approx. 2%
     #training_size = 495
-    training_size = 10
+    training_size = 9990
 
     #europe
     #testing_size = dataset_size - training_size
 
     #large_100
-    testing_size = 10
+    testing_size = 200
 
     railroads_dijkstra = []
     time_dijkstra = []
@@ -52,10 +52,13 @@ def Shortest(map, activation, criterion, criterion_function):
     couples = list(itertools.product(list(map.graph), list(map.graph)))
     random.shuffle(couples)
 
+    print("Determining Dijkstra and A* performances")
+    i = 1
     for (departure, arrival) in itertools.islice(couples, 0, training_size + testing_size):
         if departure != arrival:
-
-            print(str(departure) + " " + str(arrival))
+            if i%100 == 0:
+                print(str(i) + "th iteration")
+            #print(str(departure) + " " + str(arrival))
             start = time.time()
             path_dijkstra = nx.shortest_path(map.graph, source=departure, target = arrival, weight = 'weight')
             end = time.time()
@@ -87,6 +90,7 @@ def Shortest(map, activation, criterion, criterion_function):
                 rl.last_node = map.current_node
             railroads_astar.append(rl)
             time_astar.append(heurist_time)
+            i += 1
 
     for k in range(0, EPOCH): 
         print("EPOCH " + str(k))

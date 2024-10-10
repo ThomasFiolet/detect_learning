@@ -9,11 +9,15 @@ for f in files:
     data = []
     with open(join('results_shortest_large/large_1000/loss', f), 'r') as csvfile:
         csv_reader = csv.reader(csvfile, delimiter=';')
+
         for row in csv_reader:
-            line = []   
+            line = []
+            i = 0
             for word in row:
-                if word.replace('.','',1).isdigit():
-                    line.append(float(word))
+                if i != 0:
+                    if word.replace('.','',1).isdigit():
+                        line.append(float(word))
+                i += 1
             data.append(line)
 
         agg = [sum(x) for x in zip(*data)]

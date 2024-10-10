@@ -13,11 +13,11 @@ class Conv(nn.Module):
         #self.criterion = nn.MSELoss()
         torch.cuda.manual_seed_all(time.time())
 
-        self.conv1 = nn.Conv2d(1, 1, 5)
+        self.conv1 = nn.Conv2d(1, 3, 5)
         nn.init.constant_(self.conv1.weight, 0)
         self.activation1 = nn.Softplus()
         
-        self.conv2 = nn.Conv2d(1, 1, 5)
+        self.conv2 = nn.Conv2d(1, 3, 5)
         nn.init.constant_(self.conv2.weight, 0)
         self.activation2 = nn.Softplus()
     
