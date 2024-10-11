@@ -38,6 +38,15 @@ criterion_list = ['smoothl1', 'crossentropy', 'mse', 'crossentropy', 'crossentro
 # criterion_function_list = [nn.CrossEntropyLoss, nn.CrossEntropyLoss]
 # criterion_list = ['crossentropy', 'crossentropy']
 
+map = Map('maps/large_100/nodes', 'maps/large_100/distances', [])
+n_cities = map.graph.number_of_nodes()
+print('Number of cities in map : ' + str(n_cities))
+dataset_size = int(n_cities*(n_cities - 1)/2)
+print('Number of path possible : ' + str(dataset_size))
+
+training_size = 400
+testing_size = 200
+
 for activation, activation_function, criterion, criterion_function in zip(activation_list, activation_function_list, criterion_list, criterion_function_list):
     print(activation + ' ' + criterion)
     map = Map('maps/large_100/nodes', 'maps/large_100/distances', activation_function())
