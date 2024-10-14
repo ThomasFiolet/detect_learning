@@ -2,12 +2,12 @@ from os import listdir
 from os.path import join, isfile
 import csv
 
-files = [f for f in listdir('results_shortest_large/loss') if isfile(join('results_shortest_large/loss',f))]
+files = [f for f in listdir('results_shortest_europe/loss') if isfile(join('results_shortest_europe/loss',f))]
 
-f_save = open("results_shortest_large/loss_agragated.csv", "w")
+f_save = open("results_shortest_europe/loss_agragated.csv", "w")
 for f in files:
     data = []
-    with open(join('results_shortest_large/loss', f), 'r') as csvfile:
+    with open(join('results_shortest_europe/loss', f), 'r') as csvfile:
         csv_reader = csv.reader(csvfile, delimiter=';')
         for row in csv_reader:
             line = []   
@@ -31,16 +31,18 @@ for f in files:
 f_save.close()
 
 
-files = [f for f in listdir('results_shortest_large/results') if isfile(join('results_shortest_large/results',f))]
+files = [f for f in listdir('results_shortest_europe/results') if isfile(join('results_shortest_europe/results',f))]
 
-f_save = open("results_shortest_large/results_agragated.csv", "w")
+f_save = open("results_shortest_europe/results_agragated.csv", "w")
 f_save.write('Activation')
 f_save.write(';')
 f_save.write('Loss')
 f_save.write(';')
 f_save.write('Ratio')
 f_save.write(';')
-f_save.write('MSE')
+f_save.write('Detour')
+f_save.write(';')
+f_save.write('Detour_Ratio')
 f_save.write(';')
 f_save.write('d_time_mean')
 f_save.write(';')
@@ -51,11 +53,11 @@ f_save.write(';')
 f_save.write('\n')
 
 for f in files:
-    with open(join('results_shortest_large/results', f), 'r') as csvfile:
+    with open(join('results_shortest_europe/results', f), 'r') as csvfile:
         csv_reader = csv.reader(csvfile, delimiter=';')
         N_path_found = 0
         N_path_n = 0
-        sum_square_of_diff = 0
+        detour = 0
         path_found_ratio = 0
         d_time_sum = 0
         a_time_sum = 0
@@ -66,13 +68,16 @@ for f in files:
                 N_path_n += 1
                 if float(row[3]) > 0: 
                     N_path_found += 1
-                    sum_square_of_diff += float(row[3]) - float(row[1])
+                    detour += float(row[3]) - float(row[1])
+                    detour_ratio = detour/float(row[1])
                     d_time_sum += float(row[4])
                     a_time_sum += float(row[5])
                     o_time_sum += float(row[6])
+
             i += 1
         path_found_ratio = N_path_found/N_path_n*100
-        mean_of_diff = sum_square_of_diff/N_path_found
+        detour_mean = detour/N_path_found
+        detour_ratio_mean = detour_ratio/N_path_found
         d_time_mean = d_time_sum/N_path_found
         a_time_mean = a_time_sum/N_path_found
         o_time_mean = o_time_sum/N_path_found
@@ -94,7 +99,9 @@ for f in files:
 
         f_save.write(str(path_found_ratio))
         f_save.write(';')
-        f_save.write(str(mean_of_diff))
+        f_save.write(str(detour_mean))
+        f_save.write(';')
+        f_save.write(str(detour_ratio_mean))
         f_save.write(';')
         f_save.write(str(d_time_mean))
         f_save.write(';')
