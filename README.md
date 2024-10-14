@@ -10,4 +10,3 @@
 - run `conda install --file ./requirements_conda.txt`
 - run `conda install -c conda-forge fa2`
 - run `conda install -c menpo opencv`
-

@@ -64,7 +64,7 @@ def Shortest(map, activation, criterion, criterion_function, training_size, test
             if map.graph.nodes[city]['i_loss'] > 0:
                     map.graph.nodes[city]['loss'].append(map.graph.nodes[city]['c_loss']/map.graph.nodes[city]['i_loss'])
 
-    f_save = open("results_shortest_large/large_100/" + "/loss_" + activation + "_" + criterion + ".csv", "w")
+    f_save = open("results_shortest_europe" + "/loss_" + activation + "_" + criterion + ".csv", "w")
     for city in map.graph.nodes:
         f_save.write(map.graph.nodes[city]['name'])
         f_save.write(";")
@@ -74,7 +74,7 @@ def Shortest(map, activation, criterion, criterion_function, training_size, test
         f_save.write("\n")
     f_save.close()
 
-    f_save = open("results_shortest_large/large_100/" + "/results_" + activation + "_" + criterion + ".csv", "w")
+    f_save = open("results_shortest_europe" + "/results_" + activation + "_" + criterion + ".csv", "w")
     f_save.write("Path")
     f_save.write(";")
     f_save.write("Dijkstra")
