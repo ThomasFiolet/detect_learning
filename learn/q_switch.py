@@ -13,7 +13,7 @@ class QSwitch(nn.Module):
         torch.cuda.manual_seed_all(time.time())
 
         self.linear1 = nn.Linear(n_inputs, 30)
-        nn.init.uniform_(self.linear1   .weight, a=0, b=1.0)
+        nn.init.uniform_(self.linear1.weight, a=0, b=1.0)
         self.activation1 = activation_function
 
         self.linear2 = nn.Linear(30, n_outputs)

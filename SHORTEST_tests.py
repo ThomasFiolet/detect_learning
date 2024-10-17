@@ -4,6 +4,7 @@ random.seed(time.time())
 from random import shuffle
 import itertools
 import os
+import re
 
 import networkx as nx
 import numpy as np
@@ -19,10 +20,10 @@ from utils import iter_extract
 from utils import indx_extract
 
 edges_ratio = 0.9
-testing_size = 200
+testing_size = 50
 epoch = 30
 
-CREATE_GRAPH = True
+CREATE_GRAPH = False
 PRECOMPUTATION = True
 TRAINING = True
 
@@ -31,7 +32,7 @@ p_max = 5
 #Real values between 6 and 11
 
 activation = nn.Softplus
-criterion = nn.CrossEntropyLoss
+criterion = nn.CrossEntropyLoss()
 
 if CREATE_GRAPH:
     #Variating graph size from 64 to 2048
@@ -99,15 +100,19 @@ if CREATE_GRAPH:
 
 if PRECOMPUTATION:
     for p in range(p_min, p_max + 1):
+        testing_size = 50
         print('-------------------')
         graph_size = pow(2, p)
         folder = 'maps/nodes_' + str(graph_size) + '/'
 
-        map = Map(folder + 'nodes', folder + 'distances', activation)
+        map = Map(folder + 'nodes', folder + 'distances', activation())
         n_cities = map.graph.number_of_nodes()
-        dataset_size = int(n_cities*(n_cities - 1)/2)
-
+        dataset_size = int(n_cities*(n_cities - 1))
+        print(dataset_size)
         training_size = map.graph.number_of_nodes()
+        print(training_size)
+        testing_size = min(testing_size, dataset_size-training_size)
+        print(testing_size)
 
         railroads_dijkstra = []
         time_dijkstra = []
@@ -134,10 +139,8 @@ if PRECOMPUTATION:
                 rl = Railroad()
                 for town in path_dijkstra:
                     map.current_node = town
-                    if rl.last_node != '':
-                        rl.append(map.current_node, map.graph[rl.last_node][map.current_node]['weight'])
-                    else:
-                        rl.graph.add_node(map.current_node)
+                    if rl.last_node != '': rl.append(map.current_node, map.graph[rl.last_node][map.current_node]['weight'])
+                    else: rl.graph.add_node(map.current_node)
                     rl.last_node = map.current_node
                 railroads_dijkstra.append(rl)
                 time_dijkstra.append(optimal_time)
@@ -145,23 +148,23 @@ if PRECOMPUTATION:
                 rl = Railroad()
                 for town in path_astar:
                     map.current_node = town
-                    if rl.last_node != '':
-                        rl.append(map.current_node, map.graph[rl.last_node][map.current_node]['weight'])
-                    else:
-                        rl.graph.add_node(map.current_node)
+                    if rl.last_node != '': rl.append(map.current_node, map.graph[rl.last_node][map.current_node]['weight'])
+                    else: rl.graph.add_node(map.current_node)
                     rl.last_node = map.current_node
                 railroads_astar.append(rl)
                 time_astar.append(heurist_time)
 
-        f_save = open(folder + 'railroad_dijsktra_comma', 'w')
+        print(graph_size)
+        print(len(railroads_dijkstra))
+        f_save = open(folder + 'railroads_dijsktra_comma', 'w')
         for i in range(1, graph_size + 1):
             for town in railroads_dijkstra[i].graph:
                 f_save.write(str(town)); f_save.write(",")
             f_save.write("\n")
         f_save.close()
-        with open(folder + 'railroad_dijsktra_comma', "r") as file, open(folder + 'railroad_dijsktra', "w") as target:
+        with open(folder + 'railroads_dijsktra_comma', "r") as file, open(folder + 'railroads_dijsktra', "w") as target:
             target.write(file.read().replace(',\n','\n'))
-        os.remove(folder + 'railroad_dijsktra_comma')
+        os.remove(folder + 'railroads_dijsktra_comma')
 
         f_save = open(folder + 'time_dijkstra_comma', 'w')
         for i in range(1, graph_size + 1):
@@ -195,37 +198,47 @@ if TRAINING:
         print('-------------------')
         graph_size = pow(2, p)
         folder = 'maps/nodes_' + str(graph_size) + '/'
-        map = Map(folder + 'nodes', folder + 'distances', activation)
+        map = Map(folder + 'nodes', folder + 'distances', activation())
+
+        n_cities = map.graph.number_of_nodes()
+        dataset_size = int(n_cities*(n_cities - 1)/2)
+
+        training_size = map.graph.number_of_nodes()
 
         railroads_dijkstra = []
         railroads_astar = []
+        time_dijkstra = []
+        time_astar = []
 
-        #railroads_dijkstra_array = np.loadtxt(folder + 'railroad_dijsktra', delimiter=",")
-        railroads_astar_array = np.loadtxt(folder + 'railroads_astar', delimiter=",")
+        with open(folder + 'railroads_dijsktra') as file : 
+            for rail in file:
+                rl = Railroad()
+                towns = (t for t in re.split(',|\n', rail) if t != '')
+                for town in towns:
+                    map.current_node = town
+                    if rl.last_node != '': rl.append(map.current_node, map.graph[rl.last_node][map.current_node]['weight'])
+                    else: rl.graph.add_node(map.current_node)
+                    rl.last_node = map.current_node
+                railroads_dijkstra.append(rl)
 
-        with open(folder + 'railroad_dijsktra') as file : railroads_dijkstra_array = [line.rstrip() for line in file]
+        with open(folder + 'railroads_astar') as file :
+            for rail in file:
+                rl = Railroad()
+                towns = (t for t in re.split(',|\n', rail) if t != '')
+                for town in towns:
+                    map.current_node = town
+                    if rl.last_node != '': rl.append(map.current_node, map.graph[rl.last_node][map.current_node]['weight'])
+                    else: rl.graph.add_node(map.current_node)
+                    rl.last_node = map.current_node
+                railroads_astar.append(rl)
 
-        for i in range(0, railroads_dijkstra_array[0] - 1):
-            rl = Railroad()
-            for j in range(0, railroads_dijkstra_array[1] -1):
-                current_node = railroads_dijkstra_array[i][j]
-                if rl.last_node != '':
-                    rl.append(map.current_node, map.graph[rl.last_node][map.current_node]['weight'])
-                else:
-                    rl.graph.add_node(map.current_node)
-                rl.last_node = current_node
-            railroads_dijkstra.append(rl)
+        with open(folder + 'time_dijkstra') as file : 
+            for time_d in file:
+                time_dijkstra.append(time_d.replace('\n', ''))
 
-        for i in range(0, railroads_astar_array[0] - 1):
-            rl = Railroad()
-            for j in range(0, railroads_astar_array[1] -1):
-                current_node = railroads_astar_array[i][j]
-                if rl.last_node != '':
-                    rl.append(map.current_node, map.graph[rl.last_node][map.current_node]['weight'])
-                else:
-                    rl.graph.add_node(map.current_node)
-                rl.last_node = current_node
-            railroads_astar.append(rl)
+        with open(folder + 'time_astar') as file : 
+            for time_a in file:
+                time_astar.append(time_a.replace('\n', ''))
 
         folder = 'results/nodes_' + str(graph_size) + '/'
     
@@ -244,7 +257,6 @@ if TRAINING:
                 input[iidx] = 1 #Indicates the last city to reach to the neural net
                 for city in railroad.graph:
                     if city is list(railroad.graph)[-1] : break
-                    #print(city)
                     output = map.graph.nodes[city]['QTable'].forward(input)
                     target = torch.zeros(output.size(), device="cuda")
                     next_city = iter_extract(railroad.graph.successors(city), 0)
@@ -266,7 +278,7 @@ if TRAINING:
                 if map.graph.nodes[city]['i_loss'] > 0:
                         map.graph.nodes[city]['loss'].append(map.graph.nodes[city]['c_loss']/map.graph.nodes[city]['i_loss'])
 
-        f_save = open("folder" + "/loss.csv", "w")
+        f_save = open(folder + "loss.csv", "w")
         for city in map.graph.nodes:
             f_save.write(map.graph.nodes[city]['name'])
             f_save.write(";")
@@ -276,7 +288,7 @@ if TRAINING:
             f_save.write("\n")
         f_save.close()
 
-        f_save = open(folder + "/results.csv", "w")
+        f_save = open(folder + "results.csv", "w")
         f_save.write("Path")
         f_save.write(";")
         f_save.write("Dijkstra")
