@@ -19,16 +19,16 @@ from graph import Railroad
 from utils import iter_extract
 from utils import indx_extract
 
-edges_ratio = 0.9
-testing_size = 50
+edges_ratio = 0.5
+testing_size = 100
 epoch = 30
 
-CREATE_GRAPH = False
+CREATE_GRAPH = True
 PRECOMPUTATION = True
 TRAINING = True
 
-p_min = 2
-p_max = 5
+p_min = 7
+p_max = 7
 #Real values between 6 and 11
 
 activation = nn.Softplus
@@ -36,10 +36,12 @@ criterion = nn.CrossEntropyLoss()
 
 if CREATE_GRAPH:
     #Variating graph size from 64 to 2048
-    print('Creating random graph with uniformly distributed weights between 0 :')
+    print('Creating random graph with uniformly distributed weights between 0 and 1:')
     for p in range(p_min, p_max + 1):
         print('-------------------')
         graph_size = pow(2, p)
+        if not os.path.exists('maps/nodes_' + str(graph_size)):
+            os.makedirs('maps/nodes_' + str(graph_size))
         folder = 'maps/nodes_' + str(graph_size) + '/'
 
         f_save = open(folder + 'nodes', 'w')
@@ -48,14 +50,15 @@ if CREATE_GRAPH:
         f_save.close()
 
         #Create complete random graph
-        adj = np.random.randint(size = (graph_size, graph_size), low = 1, high = 10000)
+        adj = np.random.rand(graph_size, graph_size)
+        print(adj)
         print('Graph of size ' + str(graph_size) + ' generated.')
 
         #Save complete graph
         f_save = open(folder + 'distances_comma', 'w')
         for arr in adj:
             for d in arr:
-                f_save.write(str(int(d))); f_save.write(",")
+                f_save.write(str(float(d))); f_save.write(",")
             f_save.write("\n")
         f_save.close()
 
@@ -87,15 +90,14 @@ if CREATE_GRAPH:
         f_save = open(folder + 'distances_comma', "w")
         for arr in nx.to_numpy_array(map.graph):
             for d in arr:
-                f_save.write(str(int(d)))
-                f_save.write(",")
+                f_save.write(str(float(d))); f_save.write(",")
             f_save.write("\n")
         f_save.close()
 
         with open(folder + 'distances_comma', 'r') as file, open(folder + 'distances', "w") as target:
             target.write(file.read().replace(',\n','\n'))
-
         os.remove(folder + 'distances_comma')
+
         print('Graph of size ' + str(graph_size) + ' saved.')
 
 if PRECOMPUTATION:
@@ -108,11 +110,11 @@ if PRECOMPUTATION:
         map = Map(folder + 'nodes', folder + 'distances', activation())
         n_cities = map.graph.number_of_nodes()
         dataset_size = int(n_cities*(n_cities - 1))
-        print(dataset_size)
+        #print(dataset_size)
         training_size = map.graph.number_of_nodes()
-        print(training_size)
+        #print(training_size)
         testing_size = min(testing_size, dataset_size-training_size)
-        print(testing_size)
+        #print(testing_size)
 
         railroads_dijkstra = []
         time_dijkstra = []
@@ -123,7 +125,7 @@ if PRECOMPUTATION:
         random.shuffle(couples)
 
         print("Determining Dijkstra and A* performances on graph of size " + str())
-        for (departure, arrival) in itertools.islice(couples, 0, training_size + testing_size):
+        for (departure, arrival) in couples:
             if departure != arrival:
 
                 start = time.time()
@@ -154,10 +156,16 @@ if PRECOMPUTATION:
                 railroads_astar.append(rl)
                 time_astar.append(heurist_time)
 
-        print(graph_size)
-        print(len(railroads_dijkstra))
+                if len(railroads_dijkstra) >= training_size + testing_size : break
+
+            #print(graph_size)
+            #print(len(railroads_dijkstra))
+            #print(len(railroads_astar))
+            #print(len(time_dijkstra))
+            #print(len(time_astar))
+
         f_save = open(folder + 'railroads_dijsktra_comma', 'w')
-        for i in range(1, graph_size + 1):
+        for i in range(0, training_size + testing_size):
             for town in railroads_dijkstra[i].graph:
                 f_save.write(str(town)); f_save.write(",")
             f_save.write("\n")
@@ -167,7 +175,7 @@ if PRECOMPUTATION:
         os.remove(folder + 'railroads_dijsktra_comma')
 
         f_save = open(folder + 'time_dijkstra_comma', 'w')
-        for i in range(1, graph_size + 1):
+        for i in range(0, training_size + testing_size):
             f_save.write(str(time_dijkstra[i])); f_save.write("\n")
         f_save.close()
         with open(folder + 'time_dijkstra_comma', "r") as file, open(folder + 'time_dijkstra', "w") as target:
@@ -175,7 +183,7 @@ if PRECOMPUTATION:
         os.remove(folder + 'time_dijkstra_comma')
 
         f_save = open(folder + 'railroads_astar_comma', 'w')
-        for i in range(1, graph_size + 1):
+        for i in range(0, training_size + testing_size):
             for town in railroads_astar[i].graph:
                 f_save.write(str(town)); f_save.write(",")
             f_save.write("\n")
@@ -185,12 +193,14 @@ if PRECOMPUTATION:
         os.remove(folder + 'railroads_astar_comma')
 
         f_save = open(folder + 'time_astar_comma', 'w')
-        for i in range(1, graph_size + 1):
+        for i in range(0, training_size + testing_size):
             f_save.write(str(time_astar[i])); f_save.write("\n")
         f_save.close()
         with open(folder + 'time_astar_comma', "r") as file, open(folder + 'time_astar', "w") as target:
             target.write(file.read().replace(',\n','\n'))
         os.remove(folder + 'time_astar_comma')
+
+        #print('len of railroads_dijkstra : ' + str(len(railroads_dijkstra)))
 
 if TRAINING:
 
@@ -204,6 +214,7 @@ if TRAINING:
         dataset_size = int(n_cities*(n_cities - 1)/2)
 
         training_size = map.graph.number_of_nodes()
+        testing_size = min(testing_size, dataset_size-training_size)
 
         railroads_dijkstra = []
         railroads_astar = []
@@ -240,6 +251,8 @@ if TRAINING:
             for time_a in file:
                 time_astar.append(time_a.replace('\n', ''))
 
+        if not os.path.exists('results/nodes_' + str(graph_size)):
+            os.makedirs('results/nodes_' + str(graph_size))
         folder = 'results/nodes_' + str(graph_size) + '/'
     
         for k in range(0, epoch): 
@@ -249,9 +262,8 @@ if TRAINING:
                 map.graph.nodes[city]['c_loss'] = 0
                 map.graph.nodes[city]['i_loss'] = 0
 
-            i = 0
+            epoch_loss = 0
             for railroad in itertools.islice(railroads_dijkstra, 0, training_size):
-                i += 1
                 iidx = list(map.graph).index(list(railroad.graph)[-1]) #Get last city
                 input = torch.zeros([map.graph.number_of_nodes()], device="cuda")
                 input[iidx] = 1 #Indicates the last city to reach to the neural net
@@ -266,6 +278,8 @@ if TRAINING:
 
                     parameters = map.graph.nodes[city]['QTable'].parameters()
                     optimizer = optim.SGD(parameters, lr=0.1, momentum=0.9)
+                    #optimizer = optim.Adam(parameters, lr=0.1)
+                    #optimizer = optim.Adagrad(parameters, lr=0.1)
                     loss = criterion(output, target)
                     loss.backward()
                     optimizer.step()
@@ -277,6 +291,9 @@ if TRAINING:
             for city in map.graph.nodes:
                 if map.graph.nodes[city]['i_loss'] > 0:
                         map.graph.nodes[city]['loss'].append(map.graph.nodes[city]['c_loss']/map.graph.nodes[city]['i_loss'])
+                        epoch_loss += map.graph.nodes[city]['c_loss']/map.graph.nodes[city]['i_loss']
+            
+            print(epoch_loss)
 
         f_save = open(folder + "loss.csv", "w")
         for city in map.graph.nodes:
@@ -305,7 +322,17 @@ if TRAINING:
         f_save.write(";")
         f_save.write("\n")
 
+        #print(training_size)
+        #print(str(training_size + testing_size))
+        print(len(railroads_dijkstra))
+
         for railroad_d, railroad_a, time_d, time_a in itertools.islice(zip(railroads_dijkstra, railroads_astar, time_dijkstra, time_astar), training_size, training_size + testing_size):
+        # for index, railroad_d in enumerate(railroads_dijkstra, start = training_size):
+        #     print(len(railroads_dijkstra))
+        #     railroad_a = railroads_astar[index]
+        #     time_d = time_dijkstra[index]
+        #     time_a = time_astar[index]
+
             optimal_distance = railroad_d.graph.size(weight="weight")
             optimal_time = time_d
             heurist_distance = railroad_a.graph.size(weight="weight")

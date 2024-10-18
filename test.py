@@ -108,19 +108,21 @@ from utils import conditionnal
 # for couple in couples:
 #     print(couple)
 
-activation_list = ['elu', 'hardshrink', 'hardsigmoid', 'hardtanh', 'hardswish', 'leakyrelu', 'logsigmoid', 'multiheadattention', 'prelu', 'relu', 'relu6', 'rrelu', 'selu', 'celu', 'gelu', 'sigmoid', 'silu', 'mish', 'softplus', 'softshrink', 'softsign', 'tanh', 'tanhshrink', 'threshold', 'glu', 'softmin', 'softmax', 'softmax2d', 'logsoftmax', 'adaptivelogsoftmaxwithloss']
+# activation_list = ['elu', 'hardshrink', 'hardsigmoid', 'hardtanh', 'hardswish', 'leakyrelu', 'logsigmoid', 'multiheadattention', 'prelu', 'relu', 'relu6', 'rrelu', 'selu', 'celu', 'gelu', 'sigmoid', 'silu', 'mish', 'softplus', 'softshrink', 'softsign', 'tanh', 'tanhshrink', 'threshold', 'glu', 'softmin', 'softmax', 'softmax2d', 'logsoftmax', 'adaptivelogsoftmaxwithloss']
 
-criterion_list = ['l1', 'mse', 'crossentropy', 'ctc', 'nll', 'poissonnll', 'gaussiannll', 'kldiv', 'bce', 'bcewithlogits', 'marginranking', 'hingeembedding', 'multilabelmargin', 'huber', 'smoothl1', 'softmargin', 'multilabelsoftmargin', 'cosineembedding', 'multimargin', 'tripletmargin', 'tripletmarginwithdistance']
+# criterion_list = ['l1', 'mse', 'crossentropy', 'ctc', 'nll', 'poissonnll', 'gaussiannll', 'kldiv', 'bce', 'bcewithlogits', 'marginranking', 'hingeembedding', 'multilabelmargin', 'huber', 'smoothl1', 'softmargin', 'multilabelsoftmargin', 'cosineembedding', 'multimargin', 'tripletmargin', 'tripletmarginwithdistance']
 
-activation_function_list = [nn.ELU, nn.Hardshrink, nn.Hardsigmoid, nn.Hardtanh, nn.Hardswish, nn.LeakyReLU, nn.LogSigmoid, nn.MultiheadAttention, nn.PReLU, nn.ReLU, nn.ReLU6, nn.RReLU, nn.SELU, nn.CELU, nn.GELU, nn.Sigmoid, nn.SiLU, nn.Mish, nn.Softplus, nn.Softshrink, nn.Softsign, nn.Tanh, nn.Tanhshrink, nn.Threshold, nn.GLU, nn.Softmin, nn.Softmax, nn.Softmax2d, nn.LogSoftmax, nn.AdaptiveLogSoftmaxWithLoss]
+# activation_function_list = [nn.ELU, nn.Hardshrink, nn.Hardsigmoid, nn.Hardtanh, nn.Hardswish, nn.LeakyReLU, nn.LogSigmoid, nn.MultiheadAttention, nn.PReLU, nn.ReLU, nn.ReLU6, nn.RReLU, nn.SELU, nn.CELU, nn.GELU, nn.Sigmoid, nn.SiLU, nn.Mish, nn.Softplus, nn.Softshrink, nn.Softsign, nn.Tanh, nn.Tanhshrink, nn.Threshold, nn.GLU, nn.Softmin, nn.Softmax, nn.Softmax2d, nn.LogSoftmax, nn.AdaptiveLogSoftmaxWithLoss]
 
-criterion_function_list = [nn.L1Loss, nn.MSELoss, nn.CrossEntropyLoss, nn.CTCLoss, nn.NLLLoss, nn.PoissonNLLLoss, nn.GaussianNLLLoss, nn.KLDivLoss, nn.BCELoss, nn.BCEWithLogitsLoss, nn.MarginRankingLoss, nn.HingeEmbeddingLoss, nn.MultiLabelMarginLoss, nn.HuberLoss, nn.SmoothL1Loss, nn.SoftMarginLoss, nn.MultiLabelSoftMarginLoss, nn.CosineEmbeddingLoss, nn.MultiMarginLoss, nn.TripletMarginLoss, nn.TripletMarginWithDistanceLoss]
+# criterion_function_list = [nn.L1Loss, nn.MSELoss, nn.CrossEntropyLoss, nn.CTCLoss, nn.NLLLoss, nn.PoissonNLLLoss, nn.GaussianNLLLoss, nn.KLDivLoss, nn.BCELoss, nn.BCEWithLogitsLoss, nn.MarginRankingLoss, nn.HingeEmbeddingLoss, nn.MultiLabelMarginLoss, nn.HuberLoss, nn.SmoothL1Loss, nn.SoftMarginLoss, nn.MultiLabelSoftMarginLoss, nn.CosineEmbeddingLoss, nn.MultiMarginLoss, nn.TripletMarginLoss, nn.TripletMarginWithDistanceLoss]
 
-print(len(activation_list))
-print(len(activation_function_list))
-print(len(criterion_list))
-print(len(criterion_function_list))
-activation_function = activation_function_list[0]
-activation_function = activation_function()
-tens = torch.tensor([-1., 1., 1.])
-print(activation_function(tens))
+# print(len(activation_list))
+# print(len(activation_function_list))
+# print(len(criterion_list))
+# print(len(criterion_function_list))
+# activation_function = activation_function_list[0]
+# activation_function = activation_function()
+# tens = torch.tensor([-1., 1., 1.])
+# print(activation_function(tens))
+
+print(np.random.rand(5,5))
