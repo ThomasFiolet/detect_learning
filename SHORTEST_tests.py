@@ -27,8 +27,8 @@ CREATE_GRAPH = True
 PRECOMPUTATION = True
 TRAINING = True
 
-p_min = 7
-p_max = 7
+p_min = 6
+p_max = 6
 #Real values between 6 and 11
 
 activation = nn.Softplus
@@ -111,7 +111,7 @@ if PRECOMPUTATION:
         n_cities = map.graph.number_of_nodes()
         dataset_size = int(n_cities*(n_cities - 1))
         #print(dataset_size)
-        training_size = map.graph.number_of_nodes()
+        training_size = map.graph.number_of_nodes()*4
         #print(training_size)
         testing_size = min(testing_size, dataset_size-training_size)
         #print(testing_size)
@@ -213,7 +213,7 @@ if TRAINING:
         n_cities = map.graph.number_of_nodes()
         dataset_size = int(n_cities*(n_cities - 1)/2)
 
-        training_size = map.graph.number_of_nodes()
+        training_size = map.graph.number_of_nodes()*4
         testing_size = min(testing_size, dataset_size-training_size)
 
         railroads_dijkstra = []
@@ -271,11 +271,17 @@ if TRAINING:
                     if city is list(railroad.graph)[-1] : break
                     output = map.graph.nodes[city]['QTable'].forward(input)
                     target = torch.zeros(output.size(), device="cuda")
+                    #print(target)
                     next_city = iter_extract(railroad.graph.successors(city), 0)
                     succ = map.graph.successors(city)
                     oidx = indx_extract(succ, next_city)
+                    #print(oidx)
+                    #print(target[oidx])
                     target[oidx] = 1
 
+                    #print(input)
+                    #print(output)
+                    #print(target)
                     parameters = map.graph.nodes[city]['QTable'].parameters()
                     optimizer = optim.SGD(parameters, lr=0.1, momentum=0.9)
                     #optimizer = optim.Adam(parameters, lr=0.1)

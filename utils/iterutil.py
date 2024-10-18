@@ -5,4 +5,5 @@ def iter_extract(iterator, idx):
 
 def indx_extract(iterator, el):
     for i, v in enumerate(iterator):
-        if v is el : return i
+        #Need or for strings and int
+        if v is el or v == el : return i
