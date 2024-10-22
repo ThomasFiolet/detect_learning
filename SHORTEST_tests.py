@@ -23,8 +23,8 @@ edges_ratio = 0.5
 testing_size = 100
 epoch = 30
 
-CREATE_GRAPH = False
-PRECOMPUTATION = False
+CREATE_GRAPH = True
+PRECOMPUTATION = True
 TRAINING = True
 
 p_min = 11
