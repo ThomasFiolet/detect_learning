@@ -23,12 +23,12 @@ edges_ratio = 0.5
 testing_size = 100
 epoch = 30
 
-CREATE_GRAPH = True
-PRECOMPUTATION = True
+CREATE_GRAPH = False
+PRECOMPUTATION = False
 TRAINING = True
 
-p_min = 6
-p_max = 6
+p_min = 11
+p_max = 11
 #Real values between 6 and 11
 
 activation = nn.Softplus
