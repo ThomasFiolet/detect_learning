@@ -23,11 +23,11 @@ edges_ratio = 0.5
 testing_size = 100
 epoch = 30
 
-CREATE_GRAPH = True
+CREATE_GRAPH = False
 PRECOMPUTATION = True
 TRAINING = True
 
-p_min = 11
+p_min = 6
 p_max = 11
 #Real values between 6 and 11
 
@@ -102,7 +102,6 @@ if CREATE_GRAPH:
 
 if PRECOMPUTATION:
     for p in range(p_min, p_max + 1):
-        testing_size = 50
         print('-------------------')
         graph_size = pow(2, p)
         folder = 'maps/nodes_' + str(graph_size) + '/'
@@ -111,7 +110,7 @@ if PRECOMPUTATION:
         n_cities = map.graph.number_of_nodes()
         dataset_size = int(n_cities*(n_cities - 1))
         #print(dataset_size)
-        training_size = map.graph.number_of_nodes()*4
+        training_size = map.graph.number_of_nodes()*12
         #print(training_size)
         testing_size = min(testing_size, dataset_size-training_size)
         #print(testing_size)
@@ -126,6 +125,9 @@ if PRECOMPUTATION:
 
         print("Determining Dijkstra and A* performances on graph of size " + str())
         for (departure, arrival) in couples:
+            print(departure)
+            print(arrival)
+            print('-------------------')
             if departure != arrival:
 
                 start = time.time()
@@ -213,7 +215,7 @@ if TRAINING:
         n_cities = map.graph.number_of_nodes()
         dataset_size = int(n_cities*(n_cities - 1)/2)
 
-        training_size = map.graph.number_of_nodes()*4
+        training_size = map.graph.number_of_nodes()*12
         testing_size = min(testing_size, dataset_size-training_size)
 
         railroads_dijkstra = []

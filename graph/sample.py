@@ -13,7 +13,7 @@ SOURCE = 0
 SINK = 2
 
 class Sample:
-    def __init__(self, sources_file, sinks_file, pipes_file, adjacency_file, conv_net):
+    def __init__(self, sources_file, sinks_file, pipes_file, adjacency_file, conv_net, activation_function):
         self.current_node = "im = im_g"
 
         with open(sources_file) as file : sources_string = [line.rstrip() for line in file]
@@ -55,9 +55,9 @@ class Sample:
 
             n_outputs = sum(1 for _ in self.graph.successors(node))
             if conv_net is None : n_inputs = 8
-            else : n_inputs = 29*29
+            else : n_inputs = 29*29*5
             if n_outputs != 0:
-                self.graph.nodes[node]['QTable'] = QSwitch(n_inputs, n_outputs, False)
+                self.graph.nodes[node]['QTable'] = QSwitch(n_inputs, n_outputs, activation_function)
 
             for alg in sources_string:
                 if node == alg: self.graph.nodes[node]['subset'] = SOURCE

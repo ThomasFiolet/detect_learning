@@ -17,10 +17,10 @@ from utils import read_functions
 from utils import iter_extract
 from metrics import reward
 
-def detect_init(function_folder, isConvNet):
+def detect_init(function_folder, isConvNet, activation_function):
     source_file, pipes_file, sinks_file, adjacency_file = read_functions(function_folder)
     if isConvNet is True: conv_net = Conv()
     else: conv_net = None
-    spl = Sample(source_file, sinks_file, pipes_file, adjacency_file, conv_net)
+    spl = Sample(source_file, sinks_file, pipes_file, adjacency_file, conv_net, activation_function)
     
     return spl, conv_net

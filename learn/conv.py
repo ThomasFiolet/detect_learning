@@ -17,7 +17,7 @@ class Conv(nn.Module):
         nn.init.constant_(self.conv1.weight, 0)
         self.activation1 = nn.Softplus()
         
-        self.conv2 = nn.Conv2d(1, 3, 5)
+        self.conv2 = nn.Conv2d(3, 5, 5)
         nn.init.constant_(self.conv2.weight, 0)
         self.activation2 = nn.Softplus()
     
@@ -29,7 +29,7 @@ class Conv(nn.Module):
         x = self.conv2(x)               #58
         x = self.activation2(x)
         x = F.max_pool2d(x, (2,2))   #29
-        x = x.reshape([1, 1 * 29 * 29])
+        x = x.reshape([1, 5 * 29 * 29])
         
         #128
         #c1 = m(self.conv1(input))
