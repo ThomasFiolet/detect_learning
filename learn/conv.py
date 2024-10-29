@@ -14,22 +14,31 @@ class Conv(nn.Module):
         torch.cuda.manual_seed_all(time.time())
 
         self.conv1 = nn.Conv2d(1, 3, 5)
-        nn.init.constant_(self.conv1.weight, 0)
+        #nn.init.constant_(self.conv1.weight, 0)
+        nn.init.uniform_(self.conv1.weight, a=0, b=1.0)
         self.activation1 = nn.Softplus()
         
         self.conv2 = nn.Conv2d(3, 5, 5)
-        nn.init.constant_(self.conv2.weight, 0)
+        #nn.init.constant_(self.conv2.weight, 0)
+        nn.init.uniform_(self.conv2.weight, a=0, b=1.0)
         self.activation2 = nn.Softplus()
     
     def forward(self, input):
 
         x = self.conv1(input)           #124
+        print("x : " + str(x))
         x = self.activation1(x)
+        print("x : " + str(x))
         x = F.max_pool2d(x, (2,2))   #62
+        print("x : " + str(x))
         x = self.conv2(x)               #58
+        print("x : " + str(x))
         x = self.activation2(x)
+        print("x : " + str(x))
         x = F.max_pool2d(x, (2,2))   #29
+        print("x : " + str(x))
         x = x.reshape([1, 5 * 29 * 29])
+        print("x : " + str(x))
         
         #128
         #c1 = m(self.conv1(input))

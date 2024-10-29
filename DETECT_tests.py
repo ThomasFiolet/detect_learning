@@ -45,16 +45,28 @@ from detect import detect_learning
 PRECOMPUTATION = True
 TRAINING = True
 
-dataset_size = 331
-training_size = 60
-testing_size = 100
+#real + BarcodeTestDataset
+#dataset_size = 331 
+#training_size = 60
+#testing_size = 100
+
+#real
+# dataset_size = 105
+# training_size = 45
+# testing_size = 60
+
+#tests with real
+dataset_size = 105
+training_size = 20
+testing_size = 60
+
 testing_size = min(testing_size, dataset_size-training_size)
 
 down_width = 128
 down_height = 128
 down_points = (down_width, down_height)
 
-n_ppl = 500
+n_ppl = 5
 
 PIPE = 1
 SOURCE = 0
@@ -148,13 +160,15 @@ if TRAINING:
                 im = im_g
                 for alg in ppl.graph.nodes:
                     if spl.graph.nodes[alg]['subset'] != SINK :
-                        exec(alg)
+                        #exec(alg)
                         im_p = im
                         im_s = cv2.resize(im_p, down_points, interpolation= cv2.INTER_LINEAR)
                         im_t = transforms.ToTensor()(im_s).to(torch.device("cuda:0" if torch.cuda.is_available() else "cpu"))
                         c_im = conv_net.forward(im_t)
+                        print("c_im : " + str(c_im))
 
                         output = spl.graph.nodes[alg]['QTable'].forward(c_im)
+                        print("output : " + str(output))
                         target = torch.clone(spl.graph.nodes[alg]['QTable'].last_prediction)
 
                         for k, t in enumerate(target): target[0][k] = 1 - ppl.reward
@@ -171,7 +185,9 @@ if TRAINING:
                         optimizer.zero_grad()
                         #spl.graph.nodes[alg]['loss'].append(loss.item())
                         spl.graph.nodes[alg]['c_loss'] += loss.item()
+                        epoch_loss =+ loss.item()
                         spl.graph.nodes[alg]['i_loss'] += 1
+        print(epoch_loss)
 
         for alg in spl.graph.nodes:
             if spl.graph.nodes[alg]['i_loss'] > 0:
