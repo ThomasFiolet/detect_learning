@@ -373,8 +373,12 @@ if TRAINING:
                     next_city = iter_extract(succ, oidx)
 
                     for city in current_path.graph:
-                        if next_city == city or next_city is city: output[oidx] = 0
-                        else: NEXT_CITY_CONFIRMED = True
+                        if next_city == city or next_city is city:
+                            output[oidx] = 0
+                            print("Next city already visited")
+                        else: 
+                            NEXT_CITY_CONFIRMED = True
+                            print("Next city not visited")
 
                 current_distance += map.graph[map.current_node][next_city]['weight']
                 map.current_node = next_city
