@@ -46,27 +46,27 @@ PRECOMPUTATION = True
 TRAINING = True
 
 #real + BarcodeTestDataset
-#dataset_size = 331 
-#training_size = 60
-#testing_size = 100
+# dataset_size = 331 
+# training_size = 100
+# testing_size = 231
 
 #real
-# dataset_size = 105
-# training_size = 45
-# testing_size = 60
+dataset_size = 105
+training_size = 60
+testing_size = 45
 
 #tests with real
-dataset_size = 105
-training_size = 20
-testing_size = 60
+# dataset_size = 105
+# training_size = 10
+# testing_size = 60
 
-testing_size = min(testing_size, dataset_size-training_size)
+#testing_size = min(testing_size, dataset_size-training_size)
 
 down_width = 128
 down_height = 128
 down_points = (down_width, down_height)
 
-n_ppl = 5
+n_ppl = 200
 
 PIPE = 1
 SOURCE = 0
@@ -74,14 +74,16 @@ SINK = 2
 
 activation = nn.Softplus
 criterion = nn.CrossEntropyLoss()
+#criterion = nn.MSELoss()
+#criterion = nn.L1Loss()
 
 spl, conv_net = detect_init('tree_reduced', True, activation())
 
 EPOCH = 30
 
 #---GET DATA---#
-#images, ground_truth, len_files = read_join_dataset(['real', 'BarcodeTestDataset'])
-dataset_list = ['real', 'BarcodeTestDataset']
+#dataset_list = ['real', 'BarcodeTestDataset']
+dataset_list = ['real']
 images, ground_truth, len_files = read_join_dataset(dataset_list)
 
 training_set, test_set, training_label, test_label = sort_training_test(training_size, images, ground_truth)
@@ -164,11 +166,12 @@ if TRAINING:
                         im_p = im
                         im_s = cv2.resize(im_p, down_points, interpolation= cv2.INTER_LINEAR)
                         im_t = transforms.ToTensor()(im_s).to(torch.device("cuda:0" if torch.cuda.is_available() else "cpu"))
+                        #print("im_t : " + str(im_t))
                         c_im = conv_net.forward(im_t)
-                        print("c_im : " + str(c_im))
+                        #print("c_im : " + str(c_im))
 
                         output = spl.graph.nodes[alg]['QTable'].forward(c_im)
-                        print("output : " + str(output))
+                        #print("output : " + str(output))
                         target = torch.clone(spl.graph.nodes[alg]['QTable'].last_prediction)
 
                         for k, t in enumerate(target): target[0][k] = 1 - ppl.reward
@@ -178,16 +181,17 @@ if TRAINING:
                         target[0][oidx] = ppl.reward
 
                         parameters = list(conv_net.parameters()) + list(spl.graph.nodes[alg]['QTable'].parameters())
-                        optimizer = optim.SGD(parameters, lr=0.1, momentum=0.9)
+                        optimizer = optim.SGD(parameters, lr=0.001, momentum=0.0)
+                        #optimizer = optim.Adam(parameters, lr=0.00001)
                         loss = criterion(output, target)
                         loss.backward()
                         optimizer.step()
                         optimizer.zero_grad()
-                        #spl.graph.nodes[alg]['loss'].append(loss.item())
                         spl.graph.nodes[alg]['c_loss'] += loss.item()
                         epoch_loss =+ loss.item()
                         spl.graph.nodes[alg]['i_loss'] += 1
         print(epoch_loss)
+        print("-----------------------------------------------------------------------------")
 
         for alg in spl.graph.nodes:
             if spl.graph.nodes[alg]['i_loss'] > 0:

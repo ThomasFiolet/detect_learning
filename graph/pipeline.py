@@ -28,7 +28,7 @@ class Pipeline:
     def __init__(self):
         self.graph = nx.DiGraph()
         self.last_node = ""
-        self.reward = 0
+        self.reward = 0.0
         self.barre_code = ""
         self.horizon = 8
         self.complexity = 2
@@ -37,7 +37,7 @@ class Pipeline:
     def zero_data(self):
         self.graph.clear()
         self.last_node = ""
-        self.reward = 0
+        self.reward = 0.0
         self.barre_code = ""
 
     def append(self, alg):

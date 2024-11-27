@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import time
+import math as m
 
 torch.set_default_device('cuda')
 
@@ -15,30 +16,32 @@ class Conv(nn.Module):
 
         self.conv1 = nn.Conv2d(1, 3, 5)
         #nn.init.constant_(self.conv1.weight, 0)
-        nn.init.uniform_(self.conv1.weight, a=0, b=1.0)
+        #nn.init.uniform_(self.conv1.weight, a=-1.0, b=1.0)
+        nn.init.normal_(self.conv1.weight, mean=0.0, std=m.sqrt(2/(1*128*128*5*5)))
         self.activation1 = nn.Softplus()
         
         self.conv2 = nn.Conv2d(3, 5, 5)
         #nn.init.constant_(self.conv2.weight, 0)
-        nn.init.uniform_(self.conv2.weight, a=0, b=1.0)
+        #nn.init.uniform_(self.conv2.weight, a=-1.0, b=1.0)
+        nn.init.normal_(self.conv2.weight, mean=0.0, std=m.sqrt(2/(3*62*62*5*5)))
         self.activation2 = nn.Softplus()
     
     def forward(self, input):
 
         x = self.conv1(input)           #124
-        print("x : " + str(x))
+        #print("x : " + str(x))
         x = self.activation1(x)
-        print("x : " + str(x))
+        #print("x : " + str(x))
         x = F.max_pool2d(x, (2,2))   #62
-        print("x : " + str(x))
+        #print("x : " + str(x))
         x = self.conv2(x)               #58
-        print("x : " + str(x))
+        #print("x : " + str(x))
         x = self.activation2(x)
-        print("x : " + str(x))
+        #print("x : " + str(x))
         x = F.max_pool2d(x, (2,2))   #29
-        print("x : " + str(x))
+        #print("x : " + str(x))
         x = x.reshape([1, 5 * 29 * 29])
-        print("x : " + str(x))
+        #print("x : " + str(x))
         
         #128
         #c1 = m(self.conv1(input))

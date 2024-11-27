@@ -31,13 +31,13 @@ def zbar(image):
 
 def conditionnal(image):
     barre_code = zxing(image, zxingcpp.BarcodeFormat.EAN13)
-    if reward(barre_code, None) < 0.3: return barre_code
+    if reward(barre_code, None) > 0.7: return barre_code
 
     barre_code = tesser(image)
-    if reward(barre_code, None) < 0.3: return barre_code
+    if reward(barre_code, None) > 0.7: return barre_code
 
     barre_code, decoded_info, decoded_type = cv_barcode_detector.detectAndDecode(image)
-    if reward(barre_code, None) < 0.3: return barre_code
+    if reward(barre_code, None) > 0.7: return barre_code
 
     barre_code = zbar(image)
     return barre_code

@@ -55,14 +55,20 @@ def detect_unsupervised(im_g, spl, conv_net):
     im_t = transforms.ToTensor()(im_s).to(torch.device("cuda:0" if torch.cuda.is_available() else "cpu"))
     c_im = conv_net.forward(im_t)
 
-    print("Conv output : " + str(c_im))
+    #print("Conv output : " + str(c_im))
 
     spl.current_node = "im = im_g"
     spl.graph.nodes[spl.current_node]['nuse'] += 1
     pipeline.append(spl.current_node)
     while spl.graph.nodes[spl.current_node]['subset']  != SINK :
         #exec(spl.current_node)
-        idx = torch.argmin(spl.graph.nodes[spl.current_node]['QTable'].forward(c_im))
+        #print(spl.graph.nodes[spl.current_node]['QTable'].forward(c_im))
+        density = torch.softmax(spl.graph.nodes[spl.current_node]['QTable'].forward(c_im)[0], dim=0)
+        #print(density)
+        cumulatives = density.cumsum(0)
+        #print(cumulatives)
+        idx = torch.searchsorted(cumulatives, torch.rand(1))
+        #idx = torch.argmax(density)
         idx = idx.item()
         succ = spl.graph.successors(spl.current_node)
         spl.current_node = iter_extract(succ, idx)
