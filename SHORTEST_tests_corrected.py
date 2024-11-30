@@ -349,37 +349,47 @@ if TRAINING:
             departure = list(railroad_d.graph)[0]
             arrival = list(railroad_d.graph)[-1]
 
+            current_path = Railroad()
             map.current_node = departure    
             current_distance = 0
+            current_path.append(map.current_node, 0)
             print('------------')
             print('Departure : ' + departure + ', arrival : ' + arrival)
 
             start = time.time()
 
-            current_path = Railroad()
+            print("1")
+            
+            print("2")
             while map.current_node != arrival:
-
+                print("3")
                 iidx = list(map.graph).index(arrival)
                 input = torch.zeros([map.graph.number_of_nodes()], device="cuda")
                 input[iidx] = 1
                 output = map.graph.nodes[map.current_node]['QTable'].forward(input)
-
+                print("4")
                 #Correction
                 NEXT_CITY_CONFIRMED = False
+                print("5")
                 while NEXT_CITY_CONFIRMED is False:
+                    print("6")
                     oidx = torch.argmax(output)
                     oidx = oidx.item()
                     succ = map.graph.successors(map.current_node)
                     next_city = iter_extract(succ, oidx)
-
+                    print("7")
                     for city in current_path.graph:
+                        print("8")
                         if next_city == city or next_city is city:
                             output[oidx] = 0
+                            break 
                             print("Next city already visited")
                         else: 
                             NEXT_CITY_CONFIRMED = True
+                            break
                             print("Next city not visited")
 
+                current_path.append(city, map.graph[map.current_node][next_city]['weight'])
                 current_distance += map.graph[map.current_node][next_city]['weight']
                 map.current_node = next_city
                 if time.time() - start > 1.0:
