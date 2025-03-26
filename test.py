@@ -125,4 +125,6 @@ from utils import conditionnal
 # tens = torch.tensor([-1., 1., 1.])
 # print(activation_function(tens))
 
-print(np.random.rand(5,5))
+NEXT_CITY =  False
+if NEXT_CITY == False: print("FALSE")
+else: print("TRUE")
