@@ -307,45 +307,48 @@ if INFERENCE:
                         succ = map.graph.successors(map.current_node)
                         next_city = iter_extract(succ, oidx)
 
-                        for city in current_path.graph:
+                        print(next_city)
+                        print(list(current_path.graph))
+                        for city in list(current_path.graph):
                             if next_city == city or next_city is city:
                                 output[oidx] = 0
-                                #print("Next city already visited")
+                                print("Next city already visited")
                             else: 
                                 NEXT_CITY_CONFIRMED = True
-                                 #print("Next city not visited")
 
                     else: 
                         BACKPATH = True
-                        NEXT_CITY_CONFIRMED = True
+                        break
 
                 if NEXT_CITY_CONFIRMED is True:
-                    current_path.append(city, map.graph[map.current_node][next_city]['weight'])
+                    current_path.append(map.current_node, map.graph[map.current_node][next_city]['weight'])
                     current_distance += map.graph[map.current_node][next_city]['weight']
                     map.current_node = next_city
                 
                 if BACKPATH is True:
+                    print("BACKPATH")
                     dep_node = map.current_node
                     map.current_node = next(current_path.graph.predecessors(map.current_node)) #Take the first element of iterator
                     oidx = indx_extract(map.graph.successors(map.current_node), dep_node)
 
                 if time.time() - start > 1.0:
-                    print('Optimal distance : ' + str(optimal_distance))
-                    print('Heurist distance : ' + str(heurist_distance))
+                    #print('Optimal distance : ' + str(optimal_distance))
+                    #print('Heurist distance : ' + str(heurist_distance))
                     print('No solution found...')
                     current_distance = 0
                     break
 
             if time.time() - start < 1.0 and current_distance > 0 :
-                print('Optimal distance : ' + str(optimal_distance))
-                print('Heurist distance : ' + str(heurist_distance))
-                print('Current distance : ' + str(current_distance))
+                #print('Optimal distance : ' + str(optimal_distance))
+                #print('Heurist distance : ' + str(heurist_distance))
+                #print('Current distance : ' + str(current_distance))
+                print('Solution found...')
 
             end = time.time()
             exec_time = end - start
-            print('Optimal time : ' + str(time_d))
-            print('Heurist time : ' + str(time_a))
-            print('Current time : ' + str(exec_time))
+            #print('Optimal time : ' + str(time_d))
+            #print('Heurist time : ' + str(time_a))
+            #print('Current time : ' + str(exec_time))
 
             f_save.write(departure)
             f_save.write("-")
