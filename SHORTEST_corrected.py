@@ -25,7 +25,7 @@ epoch = 30
 
 CREATE_GRAPH = False
 PRECOMPUTATION = False
-TRAINING = True
+INFERENCE = True
 
 p_min = 6
 p_max = 11
@@ -109,11 +109,8 @@ if PRECOMPUTATION:
         map = Map(folder + 'nodes', folder + 'distances', activation())
         n_cities = map.graph.number_of_nodes()
         dataset_size = int(n_cities*(n_cities - 1))
-        #print(dataset_size)
         training_size = map.graph.number_of_nodes()*12
-        #print(training_size)
         testing_size = min(testing_size, dataset_size-training_size)
-        #print(testing_size)
 
         railroads_dijkstra = []
         time_dijkstra = []
@@ -160,12 +157,6 @@ if PRECOMPUTATION:
 
                 if len(railroads_dijkstra) >= training_size + testing_size : break
 
-            #print(graph_size)
-            #print(len(railroads_dijkstra))
-            #print(len(railroads_astar))
-            #print(len(time_dijkstra))
-            #print(len(time_astar))
-
         f_save = open(folder + 'railroads_dijsktra_comma', 'w')
         for i in range(0, training_size + testing_size):
             for town in railroads_dijkstra[i].graph:
@@ -202,9 +193,7 @@ if PRECOMPUTATION:
             target.write(file.read().replace(',\n','\n'))
         os.remove(folder + 'time_astar_comma')
 
-        #print('len of railroads_dijkstra : ' + str(len(railroads_dijkstra)))
-
-if TRAINING:
+if INFERENCE:
 
     for p in range(p_min, p_max + 1):
         print('-------------------')
@@ -261,18 +250,6 @@ if TRAINING:
             map.graph.nodes[city]['QTable'].load_state_dict(torch.load('models/shortest/nodes_' + str(graph_size) + '/' + city + '.pt', weights_only=True))
             map.graph.nodes[city]['QTable'].eval()
 
-            
-
-        # f_save = open(folder + "loss_corrected.csv", "w")
-        # for city in map.graph.nodes:
-        #     f_save.write(map.graph.nodes[city]['name'])
-        #     f_save.write(";")
-        #     for l in map.graph.nodes[city]['loss']:
-        #         f_save.write(str(l))
-        #         f_save.write(";")
-        #     f_save.write("\n")
-        # f_save.close()
-
         f_save = open(folder + "results_corrected.csv", "w")
         f_save.write("Path")
         f_save.write(";")
@@ -290,16 +267,9 @@ if TRAINING:
         f_save.write(";")
         f_save.write("\n")
 
-        #print(training_size)
-        #print(str(training_size + testing_size))
         print(len(railroads_dijkstra))
 
         for railroad_d, railroad_a, time_d, time_a in itertools.islice(zip(railroads_dijkstra, railroads_astar, time_dijkstra, time_astar), training_size, training_size + testing_size):
-        # for index, railroad_d in enumerate(railroads_dijkstra, start = training_size):
-        #     print(len(railroads_dijkstra))
-        #     railroad_a = railroads_astar[index]
-        #     time_d = time_dijkstra[index]
-        #     time_a = time_astar[index]
 
             optimal_distance = railroad_d.graph.size(weight="weight")
             optimal_time = time_d
@@ -345,7 +315,9 @@ if TRAINING:
                                 NEXT_CITY_CONFIRMED = True
                                  #print("Next city not visited")
 
-                    else: BACKPATH = True
+                    else: 
+                        BACKPATH = True
+                        NEXT_CITY_CONFIRMED = True
 
                 if NEXT_CITY_CONFIRMED is True:
                     current_path.append(city, map.graph[map.current_node][next_city]['weight'])

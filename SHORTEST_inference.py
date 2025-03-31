@@ -25,7 +25,7 @@ epoch = 30
 
 CREATE_GRAPH = False
 PRECOMPUTATION = False
-TRAINING = True
+INFERENCE = True
 
 p_min = 6
 p_max = 11
@@ -204,7 +204,7 @@ if PRECOMPUTATION:
 
         #print('len of railroads_dijkstra : ' + str(len(railroads_dijkstra)))
 
-if TRAINING:
+if INFERENCE:
 
     for p in range(p_min, p_max + 1):
         print('-------------------')
@@ -261,18 +261,6 @@ if TRAINING:
             map.graph.nodes[city]['QTable'].load_state_dict(torch.load('models/shortest/nodes_' + str(graph_size) + '/' + city + '.pt', weights_only=True))
             map.graph.nodes[city]['QTable'].eval()
 
-            
-
-        # f_save = open(folder + "loss_inference.csv", "w")
-        # for city in map.graph.nodes:
-        #     f_save.write(map.graph.nodes[city]['name'])
-        #     f_save.write(";")
-        #     for l in map.graph.nodes[city]['loss']:
-        #         f_save.write(str(l))
-        #         f_save.write(";")
-        #     f_save.write("\n")
-        # f_save.close()
-
         f_save = open(folder + "results_inference.csv", "w")
         f_save.write("Path")
         f_save.write(";")
@@ -290,16 +278,9 @@ if TRAINING:
         f_save.write(";")
         f_save.write("\n")
 
-        #print(training_size)
-        #print(str(training_size + testing_size))
         print(len(railroads_dijkstra))
 
         for railroad_d, railroad_a, time_d, time_a in itertools.islice(zip(railroads_dijkstra, railroads_astar, time_dijkstra, time_astar), training_size, training_size + testing_size):
-        # for index, railroad_d in enumerate(railroads_dijkstra, start = training_size):
-        #     print(len(railroads_dijkstra))
-        #     railroad_a = railroads_astar[index]
-        #     time_d = time_dijkstra[index]
-        #     time_a = time_astar[index]
 
             optimal_distance = railroad_d.graph.size(weight="weight")
             optimal_time = time_d
@@ -323,23 +304,10 @@ if TRAINING:
                 input = torch.zeros([map.graph.number_of_nodes()], device="cuda")
                 input[iidx] = 1
                 output = map.graph.nodes[map.current_node]['QTable'].forward(input)
-                #Correction
-                NEXT_CITY_CONFIRMED = False
-                while NEXT_CITY_CONFIRMED is False:
-                    oidx = torch.argmax(output)
-                    oidx = oidx.item()
-                    succ = map.graph.successors(map.current_node)
-                    next_city = iter_extract(succ, oidx)
-                    NEXT_CITY_CONFIRMED = True
-                    # for city in current_path.graph:
-                    #     if next_city == city or next_city is city:
-                    #         output[oidx] = 0
-                    #         break 
-                    #         print("Next city already visited")
-                    #     else: 
-                    #         NEXT_CITY_CONFIRMED = True
-                    #         break
-                    #         print("Next city not visited")
+                oidx = torch.argmax(output)
+                oidx = oidx.item()
+                succ = map.graph.successors(map.current_node)
+                next_city = iter_extract(succ, oidx)
 
                 current_path.append(city, map.graph[map.current_node][next_city]['weight'])
                 current_distance += map.graph[map.current_node][next_city]['weight']
