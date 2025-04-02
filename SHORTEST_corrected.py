@@ -13,6 +13,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 torch.set_default_device('cuda')
+torch.set_printoptions(threshold=10_000)
 
 from graph import Map
 from graph import Railroad
@@ -293,7 +294,8 @@ if INFERENCE:
                 iidx = list(map.graph).index(arrival)
                 input = torch.zeros([map.graph.number_of_nodes()], device="cuda")
                 input[iidx] = 1
-                output = map.graph.nodes[map.current_node]['QTable'].forward(input)
+                output_raw = map.graph.nodes[map.current_node]['QTable'].forward(input)
+                output = output_raw.detach().clone()
                 if BACKPATH is True:
                     output[oidx] = 0
                 
@@ -307,30 +309,32 @@ if INFERENCE:
                         succ = map.graph.successors(map.current_node)
                         next_city = iter_extract(succ, oidx)
 
-                        print(next_city)
-                        print(list(current_path.graph))
+                        print(map.current_node)
                         for city in list(current_path.graph):
-                            if next_city == city or next_city is city:
-                                output[oidx] = 0
-                                print("Next city already visited")
-                            else: 
+                            if next_city != city:
                                 NEXT_CITY_CONFIRMED = True
+                            else:
+                                output[oidx] = 0
+                                NEXT_CITY_CONFIRMED = False
+                                #print("Next city already visited")
 
                     else: 
                         BACKPATH = True
-                        break
+                        NEXT_CITY_CONFIRMED = True
+                        print("BACKPATH IS TRUE")
+
+                if BACKPATH is True:
+                    print("BACKPATH IS EXEC")
+                    dep_node = map.current_node
+                    map.current_node = next(current_path.graph.predecessors(map.current_node)) #Take the first element of iterator
+                    oidx = indx_extract(map.graph.successors(map.current_node), dep_node)
+                    NEXT_CITY_CONFIRMED = False
 
                 if NEXT_CITY_CONFIRMED is True:
                     current_path.append(map.current_node, map.graph[map.current_node][next_city]['weight'])
                     current_distance += map.graph[map.current_node][next_city]['weight']
                     map.current_node = next_city
                 
-                if BACKPATH is True:
-                    print("BACKPATH")
-                    dep_node = map.current_node
-                    map.current_node = next(current_path.graph.predecessors(map.current_node)) #Take the first element of iterator
-                    oidx = indx_extract(map.graph.successors(map.current_node), dep_node)
-
                 if time.time() - start > 1.0:
                     #print('Optimal distance : ' + str(optimal_distance))
                     #print('Heurist distance : ' + str(heurist_distance))
@@ -343,7 +347,9 @@ if INFERENCE:
                 #print('Heurist distance : ' + str(heurist_distance))
                 #print('Current distance : ' + str(current_distance))
                 print('Solution found...')
+                #print(list(current_path.graph))
 
+            
             end = time.time()
             exec_time = end - start
             #print('Optimal time : ' + str(time_d))
