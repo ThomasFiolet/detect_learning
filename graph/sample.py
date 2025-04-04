@@ -201,6 +201,7 @@ class Map:
             self.graph.nodes[node]['loss'] = []
             self.graph.nodes[node]['c_loss'] = 0
             self.graph.nodes[node]['i_loss'] = 0
+            self.graph.nodes[node]['visited'] = False
 
             n_inputs = self.graph.number_of_nodes()
             n_outputs = sum(1 for _ in self.graph.successors(node))

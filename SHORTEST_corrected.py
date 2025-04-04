@@ -281,10 +281,14 @@ if INFERENCE:
             departure = list(railroad_d.graph)[0]
             arrival = list(railroad_d.graph)[-1]
 
+            for node in map.graph.nodes:
+                map.graph.nodes[node]['visited'] = False
+
             current_path = Railroad()
             map.current_node = departure    
             current_distance = 0
             current_path.append(map.current_node, 0)
+            map.graph.nodes[map.current_node]['visited'] = True
             #print('------------')
             #print('Departure : ' + departure + ', arrival : ' + arrival)
 
@@ -307,10 +311,11 @@ if INFERENCE:
                         oidx = torch.argmax(output); oidx = oidx.item()
                         succ = map.graph.successors(map.current_node)
                         next_city = iter_extract(succ, oidx)
-                        for city in list(current_path.graph):
-                            BOOL_CHECK = BOOL_CHECK and (city != next_city)
-                        NEXT_CITY_CONFIRMED = BOOL_CHECK
-                        if NEXT_CITY_CONFIRMED == False: output[oidx] = 0
+                        #for city in list(current_path.graph):
+                            #BOOL_CHECK = BOOL_CHECK and (city != next_city)
+                        #NEXT_CITY_CONFIRMED = BOOL_CHECK
+                        if map.graph.nodes[next_city]['visited'] is False: NEXT_CITY_CONFIRMED = True
+                        else: output[oidx] = 0
                     else:
                         BACKPATH = True
 
@@ -325,6 +330,7 @@ if INFERENCE:
                     current_distance += map.graph[map.current_node][next_city]['weight']
                     current_path.append(next_city, map.graph[map.current_node][next_city]['weight'])
                     map.current_node = next_city
+                    map.graph.nodes[map.current_node]['visited'] = True
                 
                 if time.time() - start > 1.0:
                     current_distance = 0
