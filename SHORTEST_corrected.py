@@ -198,6 +198,7 @@ if INFERENCE:
 
     for p in range(p_min, p_max + 1):
         print('-------------------')
+        print('Running for graph of size ' + str(pow(2, p)))
         graph_size = pow(2, p)
         folder = 'maps/nodes_' + str(graph_size) + '/'
         map = Map(folder + 'nodes', folder + 'distances', activation())
@@ -268,7 +269,7 @@ if INFERENCE:
         f_save.write(";")
         f_save.write("\n")
 
-        print(len(railroads_dijkstra))
+        #print(len(railroads_dijkstra))
 
         for railroad_d, railroad_a, time_d, time_a in itertools.islice(zip(railroads_dijkstra, railroads_astar, time_dijkstra, time_astar), training_size, training_size + testing_size):
 
@@ -284,8 +285,8 @@ if INFERENCE:
             map.current_node = departure    
             current_distance = 0
             current_path.append(map.current_node, 0)
-            print('------------')
-            print('Departure : ' + departure + ', arrival : ' + arrival)
+            #print('------------')
+            #print('Departure : ' + departure + ', arrival : ' + arrival)
 
             start = time.time()
             
@@ -313,36 +314,10 @@ if INFERENCE:
                     else:
                         BACKPATH = True
 
-                # #Correction
-                # NEXT_CITY_CONFIRMED = True
-                # BACKPATH = False
-                # while NEXT_CITY_CONFIRMED is True:
-                #     if torch.count_nonzero(output) > 0:
-                #         oidx = torch.argmax(output)
-                #         oidx = oidx.item()
-                #         succ = map.graph.successors(map.current_node)
-                #         next_city = iter_extract(succ, oidx)
-
-                #         print(map.current_node)
-                #         for city in list(current_path.graph):
-                #             if next_city != city:
-                #                 NEXT_CITY_CONFIRMED = True
-                #             else:
-                #                 output[oidx] = 0
-                #                 NEXT_CITY_CONFIRMED = False
-                #                 #print("Next city already visited")
-
-                #     else: 
-                #         BACKPATH = True
-                #         NEXT_CITY_CONFIRMED = True
-                #         print("BACKPATH IS TRUE")
-
                 if BACKPATH is True:
-                    print("BACKPATH IS EXEC")
+                    #print("BACKPATH IS EXEC")
                     dep_node = map.current_node
-                    if all(False for _ in current_path.graph.predecessors(map.current_node)):
-                        print('No solution found...')
-                        break
+                    if all(False for _ in current_path.graph.predecessors(map.current_node)): break
                     map.current_node = next(current_path.graph.predecessors(map.current_node)) #Take the first element of iterator
                     oidx = indx_extract(map.graph.successors(map.current_node), map.current_node)
 
@@ -352,20 +327,9 @@ if INFERENCE:
                     map.current_node = next_city
                 
                 if time.time() - start > 1.0:
-                    #print('Optimal distance : ' + str(optimal_distance))
-                    #print('Heurist distance : ' + str(heurist_distance))
-                    print('No solution found...')
                     current_distance = 0
                     break
 
-            if time.time() - start < 1.0 and current_distance > 0 :
-                #print('Optimal distance : ' + str(optimal_distance))
-                #print('Heurist distance : ' + str(heurist_distance))
-                #print('Current distance : ' + str(current_distance))
-                print('Solution found...')
-                #print(list(current_path.graph))
-
-            
             end = time.time()
             exec_time = end - start
             #print('Optimal time : ' + str(time_d))
