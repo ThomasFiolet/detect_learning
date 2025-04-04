@@ -294,45 +294,61 @@ if INFERENCE:
                 iidx = list(map.graph).index(arrival)
                 input = torch.zeros([map.graph.number_of_nodes()], device="cuda")
                 input[iidx] = 1
-                output_raw = map.graph.nodes[map.current_node]['QTable'].forward(input)
-                output = output_raw.detach().clone()
+                output = map.graph.nodes[map.current_node]['QTable'].forward(input)
                 if BACKPATH is True:
                     output[oidx] = 0
-                
-                #Correction
+
                 NEXT_CITY_CONFIRMED = False
+                BOOL_CHECK = True
                 BACKPATH = False
-                while NEXT_CITY_CONFIRMED is False:
+                while not(NEXT_CITY_CONFIRMED is True or BACKPATH is True):
                     if torch.count_nonzero(output) > 0:
-                        oidx = torch.argmax(output)
-                        oidx = oidx.item()
+                        oidx = torch.argmax(output); oidx = oidx.item()
                         succ = map.graph.successors(map.current_node)
                         next_city = iter_extract(succ, oidx)
-
-                        print(map.current_node)
                         for city in list(current_path.graph):
-                            if next_city != city:
-                                NEXT_CITY_CONFIRMED = True
-                            else:
-                                output[oidx] = 0
-                                NEXT_CITY_CONFIRMED = False
-                                #print("Next city already visited")
-
-                    else: 
+                            BOOL_CHECK = BOOL_CHECK and (city != next_city)
+                        NEXT_CITY_CONFIRMED = BOOL_CHECK
+                        if NEXT_CITY_CONFIRMED == False: output[oidx] = 0
+                    else:
                         BACKPATH = True
-                        NEXT_CITY_CONFIRMED = True
-                        print("BACKPATH IS TRUE")
+
+                # #Correction
+                # NEXT_CITY_CONFIRMED = True
+                # BACKPATH = False
+                # while NEXT_CITY_CONFIRMED is True:
+                #     if torch.count_nonzero(output) > 0:
+                #         oidx = torch.argmax(output)
+                #         oidx = oidx.item()
+                #         succ = map.graph.successors(map.current_node)
+                #         next_city = iter_extract(succ, oidx)
+
+                #         print(map.current_node)
+                #         for city in list(current_path.graph):
+                #             if next_city != city:
+                #                 NEXT_CITY_CONFIRMED = True
+                #             else:
+                #                 output[oidx] = 0
+                #                 NEXT_CITY_CONFIRMED = False
+                #                 #print("Next city already visited")
+
+                #     else: 
+                #         BACKPATH = True
+                #         NEXT_CITY_CONFIRMED = True
+                #         print("BACKPATH IS TRUE")
 
                 if BACKPATH is True:
                     print("BACKPATH IS EXEC")
                     dep_node = map.current_node
+                    if all(False for _ in current_path.graph.predecessors(map.current_node)):
+                        print('No solution found...')
+                        break
                     map.current_node = next(current_path.graph.predecessors(map.current_node)) #Take the first element of iterator
-                    oidx = indx_extract(map.graph.successors(map.current_node), dep_node)
-                    NEXT_CITY_CONFIRMED = False
+                    oidx = indx_extract(map.graph.successors(map.current_node), map.current_node)
 
                 if NEXT_CITY_CONFIRMED is True:
-                    current_path.append(map.current_node, map.graph[map.current_node][next_city]['weight'])
                     current_distance += map.graph[map.current_node][next_city]['weight']
+                    current_path.append(next_city, map.graph[map.current_node][next_city]['weight'])
                     map.current_node = next_city
                 
                 if time.time() - start > 1.0:
