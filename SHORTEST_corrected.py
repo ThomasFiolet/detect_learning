@@ -306,14 +306,12 @@ if INFERENCE:
                 NEXT_CITY_CONFIRMED = False
                 BOOL_CHECK = True
                 BACKPATH = False
+                
+                succ = map.graph.successors(map.current_node)
                 while not(NEXT_CITY_CONFIRMED is True or BACKPATH is True):
                     if torch.count_nonzero(output) > 0:
                         oidx = torch.argmax(output); oidx = oidx.item()
-                        succ = map.graph.successors(map.current_node)
                         next_city = iter_extract(succ, oidx)
-                        #for city in list(current_path.graph):
-                            #BOOL_CHECK = BOOL_CHECK and (city != next_city)
-                        #NEXT_CITY_CONFIRMED = BOOL_CHECK
                         if map.graph.nodes[next_city]['visited'] is False: NEXT_CITY_CONFIRMED = True
                         else: output[oidx] = 0
                     else:
@@ -327,8 +325,8 @@ if INFERENCE:
                     oidx = indx_extract(map.graph.successors(map.current_node), map.current_node)
 
                 if NEXT_CITY_CONFIRMED is True:
-                    current_distance += map.graph[map.current_node][next_city]['weight']
                     current_path.append(next_city, map.graph[map.current_node][next_city]['weight'])
+                    current_distance += map.graph[map.current_node][next_city]['weight']
                     map.current_node = next_city
                     map.graph.nodes[map.current_node]['visited'] = True
                 

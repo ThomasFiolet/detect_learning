@@ -261,7 +261,7 @@ if INFERENCE:
             map.graph.nodes[city]['QTable'].load_state_dict(torch.load('models/shortest/nodes_' + str(graph_size) + '/' + city + '.pt', weights_only=True))
             map.graph.nodes[city]['QTable'].eval()
 
-        f_save = open(folder + "results_inference.csv", "w")
+        f_save = open(folder + "results_dijkstra.csv", "w")
         f_save.write("Path")
         f_save.write(";")
         f_save.write("Dijkstra")
@@ -278,7 +278,7 @@ if INFERENCE:
         f_save.write(";")
         f_save.write("\n")
 
-        print(len(railroads_dijkstra))
+        #print(len(railroads_dijkstra))
 
         for railroad_d, railroad_a, time_d, time_a in itertools.islice(zip(railroads_dijkstra, railroads_astar, time_dijkstra, time_astar), training_size, training_size + testing_size):
 
@@ -299,6 +299,7 @@ if INFERENCE:
 
             start = time.time()
             
+            CALL_DIJKSTRA = False
             while map.current_node != arrival:
                 iidx = list(map.graph).index(arrival)
                 input = torch.zeros([map.graph.number_of_nodes()], device="cuda")
@@ -309,15 +310,32 @@ if INFERENCE:
                 succ = map.graph.successors(map.current_node)
                 next_city = iter_extract(succ, oidx)
 
+                if map.graph.nodes[next_city]['visited'] is True:
+                    CALL_DIJKSTRA = True
+                    break
+
                 current_path.append(next_city, map.graph[map.current_node][next_city]['weight'])
                 current_distance += map.graph[map.current_node][next_city]['weight']
                 map.current_node = next_city
+                map.graph.nodes[map.current_node]['visited'] = True
+
                 if time.time() - start > 1.0:
                     print('Optimal distance : ' + str(optimal_distance))
                     print('Heurist distance : ' + str(heurist_distance))
                     print('No solution found...')
                     current_distance = 0
                     break
+
+            if CALL_DIJKSTRA is True :
+                path_dijkstra = nx.shortest_path(map.graph, source=departure, target = arrival, weight = 'weight')
+                rld = Railroad()
+                for town in path_dijkstra:
+                    map.current_node = town
+                    if rld.last_node != '': rld.append(map.current_node, map.graph[rld.last_node][map.current_node]['weight'])
+                    else: rld.graph.add_node(map.current_node)
+                    rld.last_node = map.current_node
+                railroads_dijkstra.append(rld)
+                current_distance = rld.graph.size(weight="weight")
 
             if time.time() - start < 1.0 and current_distance > 0 :
                 print('Optimal distance : ' + str(optimal_distance))
