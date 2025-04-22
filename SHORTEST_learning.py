@@ -215,7 +215,10 @@ if TRAINING:
         n_cities = map.graph.number_of_nodes()
         dataset_size = int(n_cities*(n_cities - 1)/2)
 
-        training_size = map.graph.number_of_nodes()*12
+        #First tests with k = 12
+        k = int(pow(2, p-1)/2) #Need to test training with this, should give better results, generalized
+        training_size = map.graph.number_of_nodes()*k
+        
         testing_size = min(testing_size, dataset_size-training_size)
 
         railroads_dijkstra = []
@@ -253,9 +256,9 @@ if TRAINING:
             for time_a in file:
                 time_astar.append(time_a.replace('\n', ''))
 
-        if not os.path.exists('results/nodes_' + str(graph_size)):
-            os.makedirs('results/nodes_' + str(graph_size))
-        folder = 'results/nodes_' + str(graph_size) + '/'
+        if not os.path.exists('results_2/nodes_' + str(graph_size)):
+            os.makedirs('results_2/nodes_' + str(graph_size))
+        folder = 'results_2/nodes_' + str(graph_size) + '/'
     
         for k in range(0, epoch): 
             print("EPOCH " + str(k))
@@ -295,7 +298,7 @@ if TRAINING:
             
             print(epoch_loss)
 
-        f_save = open(folder + "loss_corrected.csv", "w")
+        f_save = open(folder + "loss.csv", "w")
         for city in map.graph.nodes:
             f_save.write(map.graph.nodes[city]['name'])
             f_save.write(";")
@@ -306,9 +309,9 @@ if TRAINING:
         f_save.close()
 
 
-        if not os.path.exists('models/shortest/nodes_' + str(graph_size)):
-            os.makedirs('models/shortest/nodes_' + str(graph_size))
-        folder = 'models/shortest/nodes_' + str(graph_size) + '/'
+        if not os.path.exists('models_2/shortest/nodes_' + str(graph_size)):
+            os.makedirs('models_2/shortest/nodes_' + str(graph_size))
+        folder = 'models_2/shortest/nodes_' + str(graph_size) + '/'
 
         for city in map.graph.nodes:
             torch.save(map.graph.nodes[city]['QTable'].state_dict(), folder + map.graph.nodes[city]['name'] + '.pt')

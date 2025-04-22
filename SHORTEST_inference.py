@@ -253,12 +253,12 @@ if INFERENCE:
             for time_a in file:
                 time_astar.append(time_a.replace('\n', ''))
 
-        if not os.path.exists('results/nodes_' + str(graph_size)):
-            os.makedirs('results/nodes_' + str(graph_size))
-        folder = 'results/nodes_' + str(graph_size) + '/'
+        if not os.path.exists('results_2/nodes_' + str(graph_size)):
+            os.makedirs('results_2/nodes_' + str(graph_size))
+        folder = 'results_2/nodes_' + str(graph_size) + '/'
     
         for city in map.graph:
-            map.graph.nodes[city]['QTable'].load_state_dict(torch.load('models/shortest/nodes_' + str(graph_size) + '/' + city + '.pt', weights_only=True))
+            map.graph.nodes[city]['QTable'].load_state_dict(torch.load('models_2/shortest/nodes_' + str(graph_size) + '/' + city + '.pt', weights_only=True))
             map.graph.nodes[city]['QTable'].eval()
 
         f_save = open(folder + "results_inference.csv", "w")
