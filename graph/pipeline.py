@@ -33,6 +33,7 @@ class Pipeline:
         self.horizon = 8
         self.complexity = 2
         self.working_im = []
+        self.working_lbl = []
 
     def zero_data(self):
         self.graph.clear()
@@ -56,6 +57,7 @@ class Pipeline:
 
     def score(self, ground_truth):
         self.reward = reward(self.barre_code, ground_truth)
+        return self.reward
         #print('Ground_Truth : ' + str(ground_truth))
         #print('Barre_Code : ' + str(self.barre_code))
         #print('Reward : ' + str(self.reward))

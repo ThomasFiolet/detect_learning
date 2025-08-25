@@ -35,7 +35,7 @@ def read_join_dataset(suffix_list):
         ground_truth_path = 'data/lists/barre-code-list-' + suffix + '.txt'
 
         files = [f for f in sorted(listdir(image_path)) if isfile(join(image_path,f)) ]
-        #files = sorted(files)
+
         images = np.empty(len(files), dtype=object)
         for k in range(0, len(files)):
             images[k] = cv2.imread(join(image_path,files[k]))

@@ -28,8 +28,8 @@ PRECOMPUTATION = False
 INFERENCE = True
 
 p_min = 6
-p_max = 11
-#Real values between 6 and 11
+p_max = 10
+#Real values between 4 and 10
 
 activation = nn.Softplus
 criterion = nn.CrossEntropyLoss()
@@ -72,7 +72,7 @@ if CREATE_GRAPH:
         #Remove randomly half of edges
         edges_list = map.graph.edges
         edges_list = np.array(edges_list)
-        N_edges_to_remove = int((1 - edges_ratio)*len(edges_list))
+        N_edges_to_remove = int((1 - edges_ratio)*len(edges_list)) #Always works if edges_ratio = 0.5, since n_nodes = 2^p, n_edges can always be divided by 2
         r = list(range(0, len(edges_list)))
         random.shuffle(r)  
         edges_list_random = []
@@ -108,9 +108,11 @@ if PRECOMPUTATION:
 
         map = Map(folder + 'nodes', folder + 'distances', activation())
         n_cities = map.graph.number_of_nodes()
-        dataset_size = int(n_cities*(n_cities - 1))
+        dataset_size = int(n_cities*(n_cities - 1)) #number of possible ordered pairs
         #print(dataset_size)
-        training_size = map.graph.number_of_nodes()*12
+        k = pow(2, p-1)
+        training_size = map.graph.number_of_nodes()*k
+
         #print(training_size)
         testing_size = min(testing_size, dataset_size-training_size)
         #print(testing_size)
@@ -213,9 +215,11 @@ if INFERENCE:
         map = Map(folder + 'nodes', folder + 'distances', activation())
 
         n_cities = map.graph.number_of_nodes()
-        dataset_size = int(n_cities*(n_cities - 1)/2)
+        dataset_size = int(n_cities*(n_cities - 1)) #Sould be MAX_DATASET_SIZE
 
-        training_size = map.graph.number_of_nodes()*12
+        k = pow(2, p-1)
+        training_size = map.graph.number_of_nodes()*k
+        
         testing_size = min(testing_size, dataset_size-training_size)
 
         railroads_dijkstra = []
@@ -253,12 +257,12 @@ if INFERENCE:
             for time_a in file:
                 time_astar.append(time_a.replace('\n', ''))
 
-        if not os.path.exists('results_2/nodes_' + str(graph_size)):
-            os.makedirs('results_2/nodes_' + str(graph_size))
-        folder = 'results_2/nodes_' + str(graph_size) + '/'
+        if not os.path.exists('results/nodes_' + str(graph_size)):
+            os.makedirs('results/nodes_' + str(graph_size))
+        folder = 'results/nodes_' + str(graph_size) + '/'
     
         for city in map.graph:
-            map.graph.nodes[city]['QTable'].load_state_dict(torch.load('models_2/shortest/nodes_' + str(graph_size) + '/' + city + '.pt', weights_only=True))
+            map.graph.nodes[city]['QTable'].load_state_dict(torch.load('models/shortest/nodes_' + str(graph_size) + '/' + city + '.pt', weights_only=True))
             map.graph.nodes[city]['QTable'].eval()
 
         f_save = open(folder + "results_inference.csv", "w")

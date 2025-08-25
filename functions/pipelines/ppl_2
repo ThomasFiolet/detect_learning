@@ -1,0 +1,2 @@
+im = im_g
+self.barre_code, decoded_info, decoded_type = cv_barcode_detector.detectAndDecode(im)

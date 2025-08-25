@@ -14,6 +14,8 @@ import torch.nn.functional as F
 import torch.optim as optim
 torch.set_default_device('cuda')
 
+print('Using device:', torch.device('cuda' if torch.cuda.is_available() else 'cpu'))
+
 from graph import Map
 from graph import Railroad
 from utils import iter_extract
@@ -27,9 +29,9 @@ CREATE_GRAPH = False
 PRECOMPUTATION = False
 TRAINING = True
 
-p_min = 6
-p_max = 11
-#Real values between 6 and 11
+p_min = 4
+p_max = 10
+#Real values between 4 and 10
 
 activation = nn.Softplus
 criterion = nn.CrossEntropyLoss()
@@ -109,11 +111,11 @@ if PRECOMPUTATION:
         map = Map(folder + 'nodes', folder + 'distances', activation())
         n_cities = map.graph.number_of_nodes()
         dataset_size = int(n_cities*(n_cities - 1))
-        #print(dataset_size)
-        training_size = map.graph.number_of_nodes()*12
-        #print(training_size)
+
+        k = pow(2, p-1)
+        training_size = map.graph.number_of_nodes()*k
+
         testing_size = min(testing_size, dataset_size-training_size)
-        #print(testing_size)
 
         railroads_dijkstra = []
         time_dijkstra = []
@@ -213,11 +215,11 @@ if TRAINING:
         map = Map(folder + 'nodes', folder + 'distances', activation())
 
         n_cities = map.graph.number_of_nodes()
-        dataset_size = int(n_cities*(n_cities - 1)/2)
+        dataset_size = int(n_cities*(n_cities - 1)/2) #Sould be MAX_DATASET_SIZE
 
-        #First tests with k = 12
-        k = int(pow(2, p-1)/2) #Need to test training with this, should give better results, generalized
-        training_size = map.graph.number_of_nodes()*k
+        k = 1
+        training_size = int((map.graph.number_of_nodes()*k))
+        print(training_size)
         
         testing_size = min(testing_size, dataset_size-training_size)
 
@@ -256,9 +258,9 @@ if TRAINING:
             for time_a in file:
                 time_astar.append(time_a.replace('\n', ''))
 
-        if not os.path.exists('results_2/nodes_' + str(graph_size)):
-            os.makedirs('results_2/nodes_' + str(graph_size))
-        folder = 'results_2/nodes_' + str(graph_size) + '/'
+        if not os.path.exists('results/nodes_' + str(graph_size)):
+            os.makedirs('results/nodes_' + str(graph_size))
+        folder = 'results/nodes_' + str(graph_size) + '/'
     
         for k in range(0, epoch): 
             print("EPOCH " + str(k))
@@ -309,9 +311,9 @@ if TRAINING:
         f_save.close()
 
 
-        if not os.path.exists('models_2/shortest/nodes_' + str(graph_size)):
-            os.makedirs('models_2/shortest/nodes_' + str(graph_size))
-        folder = 'models_2/shortest/nodes_' + str(graph_size) + '/'
+        if not os.path.exists('models/shortest/nodes_' + str(graph_size)):
+            os.makedirs('models/shortest/nodes_' + str(graph_size))
+        folder = 'models/shortest/nodes_' + str(graph_size) + '/'
 
         for city in map.graph.nodes:
             torch.save(map.graph.nodes[city]['QTable'].state_dict(), folder + map.graph.nodes[city]['name'] + '.pt')
