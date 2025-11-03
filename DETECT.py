@@ -6,6 +6,7 @@ import time
 import random
 random.seed(time.time())
 import math
+import sys
 
 import cv2 as cv2
 cv_barcode_detector = cv2.barcode.BarcodeDetector()
@@ -43,10 +44,15 @@ from detect import detect_init
 from detect import detect_unsupervised
 from detect import detect_learning
 
+# TRAIN NN SEPARATLY
+# CONV NET SIZE WITH RESPECT TO THE NUMBER OF PIPELINES
+# OR BETTER IDK
+# OR JUST BINARY OUTPUT FROM CONV NET
+
 LEARNING = 1
 INFERENCE = 1
 PRIORS = 1
-GENERATE = 1
+GENERATE = 0
 
 inc_ct = 0
 max_ct = 0
@@ -61,12 +67,12 @@ training_size = 60
 testing_size = 45
 
 #image_size_reduction_for_nn
-down_width = 128
-down_height = 128
+down_width = 512
+down_height = 512
 down_points = (down_width, down_height)
 
 #number_of_pipelines
-n_ppl = 10
+n_ppl = 30
 
 #functions
 SOURCE = 0
@@ -76,6 +82,7 @@ SINK = 2
 #nn_meta_parameters
 activation = nn.Softplus
 criterion = nn.CrossEntropyLoss()
+#criterion = nn.BCELoss()
 EPOCH = 30
 
 #init_structures
@@ -143,7 +150,6 @@ if LEARNING:
 
     #----------TESTING PPL----------#
     print("3. Testing pipelines") ; inc_ct = 0 ; max_ct = len(pipeline_list)
-    printProgressBar(inc_ct, max_ct)
 
     pipeline_list_good = []
 
@@ -164,19 +170,41 @@ if LEARNING:
                     images_check[k] = 1
                     j += 1
         inc_ct += 1
-        printProgressBar(inc_ct, max_ct)
         if isWorking == 1:
             pipeline_list_good.append(ppl)
-            print("Pipeline: ")
+            print("\nPipeline: ")
             for alg in ppl.graph: print(alg)
-            print("working on " + str(len(ppl.working_im)) + '/' + str(nb_images_tested) + ' images tested.')
+            print("working on " + str(len(ppl.working_im)) + '/' + str(nb_images_tested) + ' images tested.\n')
         else :
-            print("Pipeline: ")
-            for alg in ppl.graph: print(alg)
-            print("NOT WORKING.")
+            print("█ ", end='')
+            sys.stdout.flush()
+            # print("Pipeline: ")
+            # for alg in ppl.graph: print(alg)
+            # print("NOT WORKING.")
+
+    #----------DATA AUGMENTATION----------#
+    print("4. Data Augmentation") ; inc_ct = 0 ; max_ct = len(pipeline_list)
+    max_data = 0
+    for ppl in pipeline_list_good:
+        if len(ppl.working_im) > max_data: max_data = len(ppl.working_im)
+
+    for ppl in pipeline_list_good:
+        data_size = len(ppl.working_im)
+        if data_size < max_data:
+            for k in range(0, data_size):
+                ppl.working_im.append(cv2.rotate(ppl.working_im[k], cv2.ROTATE_90_CLOCKWISE))
+                ppl.working_lbl.append(ppl.working_lbl[k])
+                ppl.working_im.append(cv2.rotate(ppl.working_im[k], cv2.ROTATE_180))
+                ppl.working_lbl.append(ppl.working_lbl[k])
+                ppl.working_im.append(cv2.rotate(ppl.working_im[k], cv2.ROTATE_90_COUNTERCLOCKWISE))
+                ppl.working_lbl.append(ppl.working_lbl[k])
+
+    print("Training dataset sizes after augmentation : ")
+    for ppl in pipeline_list_good:
+        print(len(ppl.working_im))
 
     #----------TRAINING----------#
-    print("4. Training") ; inc_ct = 0 ; max_ct = EPOCH
+    print("5. Training") ; inc_ct = 0 ; max_ct = EPOCH
     printProgressBar(inc_ct, max_ct)
 
     folder = 'results/detect'
@@ -188,53 +216,76 @@ if LEARNING:
 
     for k in range(0, EPOCH):
         epoch_loss = 0
+        i_loss = 0
 
         for node in spl.graph.nodes:
             spl.graph.nodes[node]['c_loss'] = 0
             spl.graph.nodes[node]['i_loss'] = 0
 
         for ppl in pipeline_list_good:
-            for im_r, lbl in zip(ppl.working_im, ppl.working_lbl):
+            #for im_r, lbl in zip(ppl.working_im, ppl.working_lbl):
+            #max_nb_of_img = math.floor(5*math.log10(len(ppl.working_im)) + 1)
+            #for k in range(0, max_nb_of_img):
+            random.seed(time.time())
+            k = random.randrange(len(ppl.working_im))
 
-                im_g = cv2.cvtColor(im_r, cv2.COLOR_BGR2GRAY)
-                im_b = cv2.rotate(im_g, cv2.ROTATE_180)
-                im = im_b
+            im_r = ppl.working_im[k]
+            lbl = ppl.working_lbl[k]
+            im_g = cv2.cvtColor(im_r, cv2.COLOR_BGR2GRAY)
+            im_b = cv2.rotate(im_g, cv2.ROTATE_180)
+            im = im_b
 
-                ppl.browse(im_b)
-                ppl.score(lbl)
+            ppl.browse(im_b)
+            ppl.score(lbl)
 
-                for alg in ppl.graph.nodes:
-                    if spl.graph.nodes[alg]['subset'] != SINK :
-                        im_p = im
-                        im_s = cv2.resize(im_p, down_points, interpolation= cv2.INTER_LINEAR)
-                        im_t = transforms.ToTensor()(im_s).to(torch.device("cuda:0" if torch.cuda.is_available() else "cpu"))
+            for alg in ppl.graph.nodes:
+                if spl.graph.nodes[alg]['subset'] != SINK :
+                    im_p = im
+                    im_s = cv2.resize(im_p, down_points, interpolation= cv2.INTER_LINEAR)
+                    #im_s = cv2.adaptiveThreshold(im_s,255,cv2.ADAPTIVE_THRESH_MEAN_C,cv2.THRESH_BINARY,11,2)
+                    im_t = transforms.ToTensor()(im_s).to(torch.device("cuda:0" if torch.cuda.is_available() else "cpu"))
+                    #Normalization
+                    im_t = im_t - 0.5*torch.ones(im_t.size())
+                    im_t = 2*im_t
 
-                        c_im = conv_net.forward(im_t)
-                        output = spl.graph.nodes[alg]['QTable'].forward(c_im)
+                    # print("\n-------")
+                    # print("CONV_INPUT")
+                    # print(im_t)
+                    c_im = conv_net.forward(im_t)
+                    print(c_im)
+                    # print("\n-------")
+                    # print("CONV_OUTPUT")
+                    # print(c_im)
 
-                        target = torch.clone(spl.graph.nodes[alg]['QTable'].last_prediction)
+                    output = spl.graph.nodes[alg]['QTable'].forward(c_im)
 
-                        for k, t in enumerate(target): target[0][k] = (1 - ppl.reward)
+                    target = torch.clone(spl.graph.nodes[alg]['QTable'].last_prediction)
 
-                        succ = spl.graph.successors(alg)
-                        next_alg = iter_extract(ppl.graph.successors(alg), 0) 
-                        oidx = indx_extract(succ, next_alg)
-                        target[0][oidx] = ppl.reward
+                    for k, t in enumerate(target): target[0][k] = (1 - ppl.reward)
 
-                        parameters = list(conv_net.parameters()) + list(spl.graph.nodes[alg]['QTable'].parameters())
-                        optimizer = optim.SGD(parameters, lr=0.001, momentum=0.0)
-                        #optimizer = optim.Adam(parameters, lr=0.001)
-                        loss = criterion(output, target)
-                        loss.backward()
-                        optimizer.step()
-                        optimizer.zero_grad()
-                        spl.graph.nodes[alg]['c_loss'] += loss.item()
-                        epoch_loss =+ loss.item()
-                        spl.graph.nodes[alg]['i_loss'] += 1
-        print(epoch_loss)
+                    succ = spl.graph.successors(alg)
+                    next_alg = iter_extract(ppl.graph.successors(alg), 0) 
+                    oidx = indx_extract(succ, next_alg)
+                    target[0][oidx] = ppl.reward
+
+                    parameters = list(conv_net.parameters()) + list(spl.graph.nodes[alg]['QTable'].parameters())
+                    optimizer = optim.SGD(parameters, lr=0.001, momentum=0.0)
+                    #optimizer = optim.Adam(parameters, lr=0.001)
+                    #optimizer = optim.Rprop(parameters, lr=0.01)
+                    #optimizer = optim.Adagrad(parameters)
+                    #optimizer = optim.ASGD(parameters, lr=0.1)
+                    loss = criterion(output, target)
+                    loss.backward()
+                    optimizer.step()
+                    optimizer.zero_grad()
+                    spl.graph.nodes[alg]['c_loss'] += loss.item()
+                    epoch_loss =+ loss.item()
+                    spl.graph.nodes[alg]['i_loss'] += 1
+                    i_loss += 1
+        print(str(epoch_loss/i_loss))
 
         inc_ct += 1
-        printProgressBar(inc_ct, EPOCH)  
+        #printProgressBar(inc_ct, EPOCH)  
 
     if not os.path.exists('models/detect'):
         os.makedirs('models/detect')
@@ -249,7 +300,7 @@ if LEARNING:
 if INFERENCE:
     #----------RETRIEVING MODELS----------#
     if not LEARNING:
-        print("5. Retrieving models")  ; inc_ct = 0 ; max_ct = len(spl.graph) + 1
+        print("6. Retrieving models")  ; inc_ct = 0 ; max_ct = len(spl.graph) + 1
 
         folder = 'models/detect/'
 
@@ -266,7 +317,7 @@ if INFERENCE:
         printProgressBar(inc_ct, max_ct)
 
     #----------INFERING------------#
-    print("6. Infering")   ; inc_ct = 0 ; max_ct = len(spl.graph) + 1
+    print("7. Infering")   ; inc_ct = 0 ; max_ct = len(spl.graph) + 1
     s = 0
     for im_r, lbl in zip(test_set, test_label):
 
@@ -277,15 +328,25 @@ if INFERENCE:
         im_g = cv2.cvtColor(im_r, cv2.COLOR_BGR2GRAY)
         im_b = cv2.rotate(im_g, cv2.ROTATE_180)
         im_s = cv2.resize(im_b, down_points, interpolation= cv2.INTER_LINEAR)
+        #im_s = cv2.adaptiveThreshold(im_s,255,cv2.ADAPTIVE_THRESH_MEAN_C,cv2.THRESH_BINARY,11,2)
         im_t = transforms.ToTensor()(im_s).to(torch.device("cuda:0" if torch.cuda.is_available() else "cpu"))
+        im_t = im_t - 0.5*torch.ones(im_t.size())
+        im_t = 2*im_t
+        # print("\n-------")
+        # print("CONV_INPUT")
+        # print(im_t)
         c_im = conv_net.forward(im_t)
+        # print("\n-------")
+        # print("CONV_OUTPUT")
+        # print(c_im)
 
+        print("----------------")
         while spl.graph.nodes[spl.current_node]['subset'] != SINK :
 
             output = spl.graph.nodes[spl.current_node]['QTable'].forward(c_im)
-            print("\n-------")
-            print("LIN_OUTPUT")
-            print(output)
+            # print("\n-------")
+            # print("LIN_OUTPUT")
+            # print(output)
             succ = spl.graph.successors(spl.current_node)
             idx = torch.argmax(output[0])
             idx = idx.item()
@@ -299,7 +360,6 @@ if INFERENCE:
         pipeline.browse(im_g)
         s += pipeline.score(lbl)
         barre_code = pipeline.barre_code
-        print("----------------")
         print(str(pipeline.score(lbl)) + ' : ' + str(lbl) + ' | ' + str(barre_code))
 
     print("----------------")

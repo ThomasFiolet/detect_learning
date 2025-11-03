@@ -8,35 +8,45 @@ torch.set_default_device('cuda')
 
 class Conv(nn.Module):
 
-    def __init__(self):
+    def __init__(self, activation):
         super(Conv, self).__init__()
 
         #self.criterion = nn.MSELoss()
         torch.cuda.manual_seed_all(time.time())
 
         self.conv1 = nn.Conv2d(1, 3, 5)
-        nn.init.normal_(self.conv1.weight, mean=0.0, std=m.sqrt(2/(1*127*127*5*5)))
-        self.activation1 = nn.ReLU()
+        nn.init.uniform_(self.conv1.weight, -1.0, 1.0)
+        #nn.init.normal_(self.conv1.weight, mean=0.0, std=m.sqrt(2/(1*127*127*5*5)))
+        self.activation1 = activation
 
         self.conv2 = nn.Conv2d(3, 5, 5)
-        nn.init.normal_(self.conv1.weight, mean=0.0, std=m.sqrt(2/(3*62*62*5*5)))
-        self.activation2 = nn.ReLU()
+        nn.init.uniform_(self.conv2.weight, -1.0, 1.0)
+        #nn.init.normal_(self.conv2.weight, mean=0.0, std=m.sqrt(2/(3*62*62*5*5)))
+        self.activation2 = activation
         
         self.conv3 = nn.Conv2d(5, 7, 5)
-        nn.init.normal_(self.conv2.weight, mean=0.0, std=m.sqrt(2/(5*29*29*5*5)))
-        self.activation3 = nn.ReLU()
+        nn.init.uniform_(self.conv3.weight, -1.0, 1.0)
+        #nn.init.normal_(self.conv3.weight, mean=0.0, std=m.sqrt(2/(5*29*29*5*5)))
+        self.activation3 = activation
+
+        # self.conv4 = nn.Conv2d(7, 9, 5)
+        # nn.init.normal_(self.conv4.weight, mean=0.0, std=m.sqrt(2/(7*12*12*5*5)))
+        # self.activation4 = activation
     
     def forward(self, input):
 
-        x = self.conv1(input)           #124
+        x = self.conv1(input)           #124 #508
         x = self.activation1(x)
-        x = F.max_pool2d(x, (2,2))   #62
-        x = self.conv2(x)               #58
+        x = F.max_pool2d(x, (2,2))      #62  #254
+        x = self.conv2(x)               #58  #250
         x = self.activation2(x)
-        x = F.max_pool2d(x, (2,2))   #29
-        x = self.conv3(x)               #25
+        x = F.max_pool2d(x, (2,2))      #29  #125
+        x = self.conv3(x)               #25  #121
         x = self.activation3(x)
-        x = F.max_pool2d(x, (2,2))   #12
-        x = x.reshape([1, 7 * 12 * 12])
+        x = F.max_pool2d(x, (2,2))      #12  #60
+        # x = self.conv4(x)             #8
+        # x = self.activation4(x)
+        # x = F.max_pool2d(x, (2,2))    #4
+        x = x.reshape([1, 7 * 60 * 60])
 
         return x

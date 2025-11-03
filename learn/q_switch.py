@@ -21,7 +21,7 @@ class QSwitch(nn.Module):
 
         self.linear2 = nn.Linear(n_hidden, n_outputs)
         nn.init.normal_(self.linear2.weight, mean=0.0, std=m.sqrt(2/n_hidden)) #He Initialization
-        self.activation2 = activation_function
+        self.activation2 = nn.Hardsigmoid()
 
         self.last_prediction = torch.full((1, n_outputs), 1/n_outputs)
 
